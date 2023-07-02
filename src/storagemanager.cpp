@@ -1214,7 +1214,7 @@ bool StorageManager::closeFile() {
 
 
 void StorageManager::writeFirmwareVersion() {
-	writeAttribute("firmwareVersion", "4.1.4-alpha");
+	writeAttribute("firmwareVersion", "4.1.4-beta");
 }
 
 void StorageManager::writeEarliestCompatibleFirmwareVersion(char const* versionString) {
