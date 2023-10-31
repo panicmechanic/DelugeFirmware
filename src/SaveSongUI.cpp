@@ -87,7 +87,9 @@ gotError:
 
     // TODO: create folder if doesn't exist.
 
-	enteredTextEditPos = 0;//enteredText.getLength();
+#if HAVE_OLED	// Otherwise, for numeric, we'll keep the edit-pos that arrivedInNewFolder() decided on.
+	enteredTextEditPos = 0;
+#endif
 
 	IndicatorLEDs::setLedState(synthLedX, synthLedY, false);
 	IndicatorLEDs::setLedState(kitLedX, kitLedY, false);

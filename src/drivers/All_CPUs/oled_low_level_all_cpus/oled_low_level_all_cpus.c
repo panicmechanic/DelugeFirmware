@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020	-2023 Synthstrom Audible Limited
+ * Copyright © 2020-2023 Synthstrom Audible Limited
  *
  * This file is part of The Synthstrom Audible Deluge Firmware.
  *

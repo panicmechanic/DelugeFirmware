@@ -618,7 +618,7 @@ tryAgain:	char const* delimeterAddress = strrchr(endSearchStringChars, delimeter
 			if (delimeterAddress) {
 				int underscorePos = delimeterAddress - endSearchStringChars;
 
-				// Ok, it what comes after the underscore a positive integer?
+				// Ok, and is what comes after the underscore a positive integer?
 				int number = stringToUIntOrError(delimeterAddress + 1);
 				if (number < 0) goto noNumberYet;
 
