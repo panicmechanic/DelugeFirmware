@@ -170,7 +170,7 @@ void MenuItemRange::drawPixelsForOled() {
 
 	int textLength = leftLength + rightLength + (bool)rightLength;
 
-	int baseY = 18;
+	int baseY = 18 + OLED_MAIN_TOPMOST_PIXEL;
 	int digitWidth = TEXT_HUGE_SPACING_X;
 	int digitHeight = TEXT_HUGE_SIZE_Y;
 
