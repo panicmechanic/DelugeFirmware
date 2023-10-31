@@ -3752,6 +3752,9 @@ doMIDIOrCV:			newItem = &soundEditorRootMenuMIDIOrCV;
 		newItem = &multiRangeMenu;
 	}
 
+#if HAVE_OLED
+	OLED::removePopup(); // Ensure that if the user was auditioning a note, its name doesn't stay on the screen.
+#endif
 
 	currentSound = newSound;
 	currentArpSettings = newArpSettings;
