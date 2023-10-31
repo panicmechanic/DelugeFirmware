@@ -416,9 +416,10 @@ deleteThisItem:			readItem->~FileItem();
 
 
 // song may be supplied as NULL, in which case it won't be searched for Instruments; sometimes this will get called when the currentSong is not set up.
+// filenameToStartAt should have .XML at the end of it.
 int Browser::readFileItemsFromFolderAndMemory(Song* song, int instrumentType, char const* filePrefixHere, char const* filenameToStartAt,
 		char const* defaultDirToAlsoTry, bool allowFolders, int availabilityRequirement, int newCatalogSearchDirection) {
-// filenameToStartAt should have .XML at the end of it.
+
 	bool triedCreatingFolder = false;
 
 tryReadingItems:
@@ -1003,11 +1004,12 @@ addTildeAndSearch:
 doSearch:
 	int i = fileItems.search(searchString.get());
 
-	// If that search takes us off the right-hand end of the list...
-	if (i >= fileItems.getNumElements()) {
+	// If that search takes us off the right-hand end of the fileItems list, but the fileItems list was not in fact loaded right up to the end of the folder's contents...
+	if (i >= fileItems.getNumElements() && numFileItemsDeletedAtEnd) {
 
 		// If we haven't yet done a whole new read from the SD card etc, from within this function, do that now.
-		if (!doneNewRead) {
+		if (!doneNewRead) { // Probably don't technically need to check this anymore, since doing a new read ought to either give us a list appropriate for our
+							// search term, or set numFileItemsDeletedAtEnd to 0 (so, the above if statement wouldn't have been passed).
 doNewRead:
 			doneNewRead = true;
 			error = readFileItemsFromFolderAndMemory(currentSong, instrumentTypeToLoad, filePrefix, searchString.get(), NULL, true, 0, CATALOG_SEARCH_BOTH); // This could probably actually be made to work with searching left only...
@@ -1034,7 +1036,7 @@ notFound:
 	}
 
 	if (i == 0) {
-		if (!doneNewRead) goto doNewRead;
+		if (!doneNewRead) goto doNewRead; // Maybe wouldn't actually help...
 		else goto notFound;
 	}
 
