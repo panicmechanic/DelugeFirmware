@@ -1675,6 +1675,10 @@ MenuItemUnpatchedParam audioClipModFXRateMenu;
 class MenuItemAudioClipModFXType final : public MenuItemModFXType {
 public:
 	MenuItemAudioClipModFXType(char const* newName = NULL) : MenuItemModFXType(newName) {}
+	void beginSession(MenuItem* navigatedBackwardFrom) {
+		MenuItemModFXType::beginSession(navigatedBackwardFrom);
+		if (soundEditor.menuCurrentScroll < 1) soundEditor.menuCurrentScroll = 1;
+	}
 	void selectEncoderAction(int offset) { // We override this to set min value to 1. We don't inherit any getMinValue() function to override more easily
 		soundEditor.currentValue += offset;
 		int numOptions = getNumOptions();
