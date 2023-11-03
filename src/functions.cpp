@@ -304,9 +304,9 @@ void setDimmerInterval(int newInterval) {
 	dimmerInterval = newInterval;
 
 	int newRefreshTime = 23 - newInterval;
-	while (newRefreshTime < 6) {
+	while (newRefreshTime < 8) {
 		newRefreshTime++;
-		newInterval *= 1.2;
+		newInterval *= 1.2; // Hmm, not sure why this was necessary...
 	}
 
 	//Uart::print("newInterval: ");
