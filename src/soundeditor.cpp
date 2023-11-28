@@ -2123,7 +2123,7 @@ MenuItemSubmenu coloursSubmenu;
 
 
 
-char const* firmwareString = "4.1.4-beta2";
+char const* firmwareString = "4.1.4-rc";
 
 class MenuItemFirmwareVersion final : public MenuItem {
 public:

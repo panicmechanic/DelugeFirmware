@@ -95,7 +95,7 @@
 #define FIRMWARE_4P1P4			70
 #define FIRMWARE_TOO_NEW 255
 
-#define CURRENT_FIRMWARE_VERSION FIRMWARE_4P1P4_BETA
+#define CURRENT_FIRMWARE_VERSION FIRMWARE_4P1P4
 
 
 
@@ -687,7 +687,7 @@
 #define ARM_STATE_ON_NORMAL 1 // Arming to stop or start normally, or to stop soloing
 #define ARM_STATE_ON_TO_SOLO 2
 
-#define ALPHA_OR_BETA_VERSION 1 // Whether to compile with additional error-checking
+#define ALPHA_OR_BETA_VERSION 0 // Whether to compile with additional error-checking
 
 #define NUM_PROBABILITY_VALUES 20
 #define DEFAULT_LIFT_VALUE 64
