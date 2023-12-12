@@ -119,7 +119,7 @@ void QwertyUI::drawTextForOLEDEditing(int xPixel, int xPixelMax, int yPixel, int
 	maxXScroll = getMax(maxXScroll, 0);
 	scrollPosHorizontal = getMin(scrollPosHorizontal, maxXScroll);
 
-	OLED::drawString(&displayName[scrollPosHorizontal], xPixel, yPixel, image[0], OLED_MAIN_WIDTH_PIXELS, TEXT_SPACING_X, TEXT_SPACING_Y);
+	OLED::drawString(&displayName[scrollPosHorizontal], xPixel, yPixel, image[0], OLED_MAIN_WIDTH_PIXELS, TEXT_SPACING_X, TEXT_SPACING_Y, 0, xPixel + maxNumChars * TEXT_SPACING_X);
 
 	int hilightStartX = xPixel + TEXT_SPACING_X * (enteredTextEditPos - scrollPosHorizontal);
 	//int hilightEndX = xPixel + TEXT_SIZE_X * (displayStringLength - scrollPosHorizontal);

@@ -140,7 +140,7 @@ gotError:
 
 #if HAVE_OLED
 void AudioRecorder::renderOLED(uint8_t image[][OLED_MAIN_WIDTH_PIXELS]) {
-	OLED::drawStringCentred("Recording", 15, image[0], OLED_MAIN_WIDTH_PIXELS, TEXT_BIG_SPACING_X, TEXT_BIG_SIZE_Y);
+	OLED::drawStringCentred("Recording", 19, image[0], OLED_MAIN_WIDTH_PIXELS, TEXT_BIG_SPACING_X, TEXT_BIG_SIZE_Y);
 }
 #endif
 

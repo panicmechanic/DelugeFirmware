@@ -2305,7 +2305,7 @@ public:
 	void drawPixelsForOled() {
 		char buffer[12];
 		intToString(96 << soundEditor.currentValue, buffer);
-		OLED::drawStringCentred(buffer, 20 + OLED_MAIN_TOPMOST_PIXEL, OLED::oledMainImage[0], OLED_MAIN_WIDTH_PIXELS, 18, 20);
+		OLED::drawStringCentred(buffer, 18 + OLED_MAIN_TOPMOST_PIXEL, OLED::oledMainImage[0], OLED_MAIN_WIDTH_PIXELS, 18, 20);
 	}
 #else
 	void drawValue() {

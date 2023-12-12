@@ -36,7 +36,7 @@ void RenameUI::displayText(bool blinkImmediately) {
 
 void RenameUI::renderOLED(uint8_t image[][OLED_MAIN_WIDTH_PIXELS]) {
 
-	int windowWidth = 100;
+	int windowWidth = 110;
 	int windowHeight = 40;
 
 	int windowMinX = (OLED_MAIN_WIDTH_PIXELS - windowWidth) >> 1;
