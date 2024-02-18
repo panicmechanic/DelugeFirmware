@@ -83,6 +83,7 @@
 #include "storage/storage_manager.h"
 
 namespace params = deluge::modulation::params;
+namespace encoders = deluge::hid::encoders;
 using namespace deluge;
 using namespace gui;
 
@@ -950,7 +951,7 @@ void View::modEncoderAction(int32_t whichModEncoder, int32_t offset) {
 					indicator_leds::blinkKnobIndicator(whichModEncoder);
 
 					// Make it harder to turn that knob away from its centred position
-					Encoders::timeModEncoderLastTurned[whichModEncoder] = AudioEngine::audioSampleTimer - kSampleRate;
+					encoders::timeModEncoderLastTurned[whichModEncoder] = AudioEngine::audioSampleTimer - kSampleRate;
 				}
 				else {
 					indicator_leds::stopBlinkingKnobIndicator(whichModEncoder);
@@ -1489,7 +1490,7 @@ void View::setModRegion(uint32_t pos, uint32_t length, int32_t noteRowId) {
 }
 
 void View::pretendModKnobsUntouchedForAWhile() {
-	Encoders::timeModEncoderLastTurned[0] = Encoders::timeModEncoderLastTurned[1] =
+	encoders::timeModEncoderLastTurned[0] = encoders::timeModEncoderLastTurned[1] =
 	    AudioEngine::audioSampleTimer - kSampleRate;
 }
 
