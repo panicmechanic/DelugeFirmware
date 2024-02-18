@@ -118,8 +118,14 @@ public:
 	bool inSettingsMenu();
 	bool inSongMenu();
 	bool setupKitGlobalFXMenu;
+
+	/// Exit all open menus
 	void exitCompletely();
+	/// Navigate up one level in the open menu stack
 	void goUpOneLevel();
+	/// Push a menu on to the menu stack
+	void tryEnterMenu(MenuItem& menu);
+
 	bool pcReceivedForMidiLearn(MIDIDevice* fromDevice, int32_t channel, int32_t program);
 	bool noteOnReceivedForMidiLearn(MIDIDevice* fromDevice, int32_t channel, int32_t note, int32_t velocity);
 	void markInstrumentAsEdited();

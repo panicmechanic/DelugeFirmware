@@ -39,7 +39,6 @@ public:
 	ParamDescriptor getLearningThing() final;
 	[[nodiscard]] int32_t getMaxValue() const override { return Param::getMaxValue(); }
 	[[nodiscard]] int32_t getMinValue() const override { return Param::getMinValue(); }
-	MenuItem* selectButtonPress() final { return Param::selectButtonPress(); }
 
 	void unlearnAction() final { MenuItemWithCCLearning::unlearnAction(); }
 	bool allowsLearnMode() final { return MenuItemWithCCLearning::allowsLearnMode(); }

@@ -60,7 +60,6 @@ public:
 
 	virtual void beginSession(MenuItem* navigatedBackwardFrom = nullptr){};
 	virtual bool isRelevant(Sound* sound, int32_t whichThing) { return true; }
-	virtual MenuItem* selectButtonPress() { return nullptr; }
 	virtual MenuPermission checkPermissionToBeginSession(Sound* sound, int32_t whichThing, MultiRange** currentRange);
 	virtual void readValueAgain() {}
 	virtual bool selectEncoderActionEditsInstrument() { return false; }

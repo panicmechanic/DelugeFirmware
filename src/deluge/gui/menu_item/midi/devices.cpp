@@ -39,6 +39,13 @@ ActionResult Devices::handleEvent(hid::Event const& event) {
 		    }
 		    return Value<int32_t>::handleEvent(event);
 	    },
+	    [this, event](hid::ButtonEvent& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    soundEditor.tryEnterMenu(midiDeviceMenu);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return Value<int32_t>::handleEvent(event);
+	    },
 	    [this, event](auto _) { return Value<int32_t>::handleEvent(event); },
 	};
 	return std::visit(handler, event);
@@ -151,10 +158,6 @@ void Devices::drawValue() {
 		char const* displayName = soundEditor.currentMIDIDevice->getDisplayName();
 		display->setScrollingText(displayName);
 	}
-}
-
-MenuItem* Devices::selectButtonPress() {
-	return &midiDeviceMenu;
 }
 
 void Devices::drawPixelsForOled() {

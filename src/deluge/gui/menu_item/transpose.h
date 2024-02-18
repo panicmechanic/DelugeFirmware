@@ -28,7 +28,21 @@ public:
 	Transpose(l10n::String newName, l10n::String title, int32_t newP = 0)
 	    : Decimal(newName, title), PatchedParam(newP) {}
 
-	MenuItem* selectButtonPress() final { return PatchedParam::selectButtonPress(); }
+	ActionResult handleEvent(hid::Event const& event) override {
+		hid::EventHandler handler{
+		    [this, event](hid::ButtonEvent const& buttonEvent) {
+			    auto result = PatchedParam::buttonAction(buttonEvent.which, buttonEvent.on);
+			    if (result != ActionResult::NOT_DEALT_WITH) {
+				    return result;
+			    }
+			    return Decimal::handleEvent(event);
+		    },
+		    [this, event](auto _) { return Decimal::handleEvent(event); },
+		};
+
+		return std::visit(handler, event);
+	}
+
 	[[nodiscard]] int32_t getMinValue() const final { return -9600; }
 	[[nodiscard]] int32_t getMaxValue() const final { return 9600; }
 	[[nodiscard]] int32_t getNumDecimalPlaces() const final { return 2; }

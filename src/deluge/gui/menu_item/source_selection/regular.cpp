@@ -23,18 +23,28 @@
 namespace deluge::gui::menu_item::source_selection {
 Regular regularMenu{};
 
+ActionResult Regular::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    soundEditor.tryEnterMenu(patch_cable_strength::regularMenu);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return SourceSelection::handleEvent(event);
+	    },
+	    [this, event](auto _) { return SourceSelection::handleEvent(event); },
+	};
+
+	return std::visit(handler, event);
+}
+
 ParamDescriptor Regular::getDestinationDescriptor() {
 	ParamDescriptor descriptor{};
 	descriptor.setToHaveParamOnly(soundEditor.patchingParamSelected);
 	return descriptor;
 }
 
-MenuItem* Regular::selectButtonPress() {
-	return &patch_cable_strength::regularMenu;
-}
-
 void Regular::beginSession(MenuItem* navigatedBackwardFrom) {
-
 	if (navigatedBackwardFrom != nullptr) {
 		if (soundEditor.patchingParamSelected == deluge::modulation::params::GLOBAL_VOLUME_POST_REVERB_SEND
 		    || soundEditor.patchingParamSelected == deluge::modulation::params::LOCAL_VOLUME) {

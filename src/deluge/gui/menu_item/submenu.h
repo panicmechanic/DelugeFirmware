@@ -41,7 +41,6 @@ public:
 
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
 	void updateDisplay();
-	MenuItem* selectButtonPress() final;
 	void readValueAgain() final { updateDisplay(); }
 	void unlearnAction() final;
 	bool allowsLearnMode() final;

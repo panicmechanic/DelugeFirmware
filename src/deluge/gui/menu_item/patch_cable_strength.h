@@ -25,6 +25,9 @@ namespace deluge::gui::menu_item {
 class PatchCableStrength : public Decimal, public MenuItemWithCCLearning {
 public:
 	using Decimal::Decimal;
+
+	ActionResult handleEvent(hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom) final;
 	void readCurrentValue() final;
 	void writeCurrentValue() override;
@@ -36,7 +39,6 @@ public:
 	virtual ParamDescriptor getDestinationDescriptor() = 0;
 	virtual PatchSource getS() = 0;
 	uint8_t getIndexOfPatchedParamToBlink() final;
-	MenuItem* selectButtonPress() override;
 
 	// OLED Only
 	void renderOLED();

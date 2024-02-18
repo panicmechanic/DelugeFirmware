@@ -13,6 +13,13 @@ ActionResult Submenu::handleEvent(hid::Event const& event) {
 		    }
 		    return MenuItem::handleEvent(event);
 	    },
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    soundEditor.tryEnterMenu(**current_item_);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return MenuItem::handleEvent(event);
+	    },
 	    [this, event](auto _) { return MenuItem::handleEvent(event); },
 	};
 	return std::visit(handler, event);
@@ -130,10 +137,6 @@ void Submenu::selectEncoderAction(int32_t offset) {
 	}
 
 	updateDisplay();
-}
-
-MenuItem* Submenu::selectButtonPress() {
-	return *current_item_;
 }
 
 void Submenu::unlearnAction() {

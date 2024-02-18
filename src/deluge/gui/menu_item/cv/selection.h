@@ -28,6 +28,24 @@ class Selection final : public menu_item::Selection {
 public:
 	using menu_item::Selection::Selection;
 
+	ActionResult handleEvent(hid::Event const& event) override {
+		hid::EventHandler handler{
+		    [this, event](hid::ButtonEvent const& buttonEvent) {
+			    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+				    soundEditor.currentSourceIndex = this->getValue();
+				    setCvNumberForTitle(this->getValue());
+				    soundEditor.tryEnterMenu(cvSubmenu);
+				    return ActionResult::DEALT_WITH;
+			    }
+
+			    return Selection::handleEvent(event);
+		    },
+		    [this, event](auto _) { return Selection::handleEvent(event); },
+		};
+
+		return std::visit(handler, event);
+	}
+
 	void beginSession(MenuItem* navigatedBackwardFrom) override {
 		if (navigatedBackwardFrom == nullptr) {
 			this->setValue(0);
@@ -36,12 +54,6 @@ public:
 			this->setValue(soundEditor.currentSourceIndex);
 		}
 		menu_item::Selection::beginSession(navigatedBackwardFrom);
-	}
-
-	MenuItem* selectButtonPress() override {
-		soundEditor.currentSourceIndex = this->getValue();
-		setCvNumberForTitle(this->getValue());
-		return &cvSubmenu;
 	}
 
 	deluge::vector<std::string_view> getOptions() override {

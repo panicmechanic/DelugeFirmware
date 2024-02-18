@@ -29,14 +29,15 @@
 
 namespace deluge::gui::menu_item {
 
-MenuItem* PatchedParam::selectButtonPress() {
-
-	// If shift held down, user wants to delete automation
-	if (Buttons::isShiftButtonPressed()) {
-		return Param::selectButtonPress();
+ActionResult PatchedParam::buttonAction(hid::Button b, bool on) {
+	if (on && b == hid::button::SELECT_ENC && !Buttons::isShiftButtonPressed()) {
+		// Select inside patchable params opens the source selector, unless shift is pressed in which case it falls
+		// through to the default, automation reset.
+		soundEditor.patchingParamSelected = this->getP();
+		soundEditor.tryEnterMenu(source_selection::regularMenu);
 	}
-	soundEditor.patchingParamSelected = this->getP();
-	return &source_selection::regularMenu;
+
+	return Param::buttonAction(b, on);
 }
 
 uint8_t PatchedParam::shouldDrawDotOnName() {

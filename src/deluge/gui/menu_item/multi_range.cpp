@@ -44,6 +44,13 @@ ActionResult MultiRange::handleEvent(hid::Event const& event) {
 
 		    return Range::handleEvent(event);
 	    },
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    soundEditor.tryEnterMenu(*menuItemHeadingTo);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return Range::handleEvent(event);
+	    },
 	    [this, event](auto _) { return Range::handleEvent(event); },
 	};
 	return std::visit(handler, event);
@@ -395,10 +402,6 @@ void MultiRange::getText(char* buffer, int32_t* getLeftLength, int32_t* getRight
 		*(bufferPos++) = ' ';
 		noteCodeToString(note, bufferPos, getRightLength);
 	}
-}
-
-MenuItem* MultiRange::selectButtonPress() {
-	return menuItemHeadingTo;
 }
 
 void MultiRange::noteOnToChangeRange(int32_t noteCode) {

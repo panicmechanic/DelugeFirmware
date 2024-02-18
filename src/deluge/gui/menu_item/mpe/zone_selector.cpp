@@ -16,11 +16,27 @@
  */
 
 #include "zone_selector.h"
+#include "gui/ui/sound_editor.h"
 #include "zone_num_member_channels.h"
 
 namespace deluge::gui::menu_item::mpe {
 
 ZoneSelector zoneSelectorMenu{};
+
+ActionResult ZoneSelector::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    soundEditor.tryEnterMenu(zoneNumMemberChannelsMenu);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return Selection::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Selection::handleEvent(event); },
+	};
+
+	return std::visit(handler, event);
+}
 
 void ZoneSelector::beginSession(MenuItem* navigatedBackwardFrom) {
 	if (!navigatedBackwardFrom) {
@@ -29,7 +45,4 @@ void ZoneSelector::beginSession(MenuItem* navigatedBackwardFrom) {
 	Selection::beginSession(navigatedBackwardFrom);
 }
 
-MenuItem* ZoneSelector::selectButtonPress() {
-	return &zoneNumMemberChannelsMenu;
-}
 } // namespace deluge::gui::menu_item::mpe

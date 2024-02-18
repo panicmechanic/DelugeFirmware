@@ -236,35 +236,37 @@ ActionResult SoundEditor::buttonAction(deluge::hid::Button b, bool on, bool inCa
 				if (inCardRoutine) {
 					return ActionResult::REMIND_ME_OUTSIDE_CARD_ROUTINE;
 				}
+				getCurrentMenuItem()->handleEvent(hid::ButtonEvent{
+				    .which = hid::button::SELECT_ENC,
+				    .on = on,
+				});
+				/*
 				MenuItem* newItem = getCurrentMenuItem()->selectButtonPress();
 				if (newItem) {
-					if (newItem != (MenuItem*)0xFFFFFFFF) {
+				    if (newItem != (MenuItem*)0xFFFFFFFF) {
 
-						MenuPermission result = newItem->checkPermissionToBeginSession(currentSound, currentSourceIndex,
-						                                                               &currentMultiRange);
+				        MenuPermission result = newItem->checkPermissionToBeginSession(currentSound, currentSourceIndex,
+				                                                                       &currentMultiRange);
 
-						if (result != MenuPermission::NO) {
+				        if (result != MenuPermission::NO) {
 
-							if (result == MenuPermission::MUST_SELECT_RANGE) {
-								currentMultiRange = nullptr;
-								menu_item::multiRangeMenu.menuItemHeadingTo = newItem;
-								newItem = &menu_item::multiRangeMenu;
-							}
+				            if (result == MenuPermission::MUST_SELECT_RANGE) {
+				                currentMultiRange = nullptr;
+				                menu_item::multiRangeMenu.menuItemHeadingTo = newItem;
+				                newItem = &menu_item::multiRangeMenu;
+				            }
 
-							navigationDepth++;
-							menuItemNavigationRecord[navigationDepth] = newItem;
-							display->setNextTransitionDirection(1);
-							beginScreen();
-						}
-					}
+				            navigationDepth++;
+				            menuItemNavigationRecord[navigationDepth] = newItem;
+				            display->setNextTransitionDirection(1);
+				            beginScreen();
+				        }
+				    }
 				}
 				else {
-					goUpOneLevel();
+				    goUpOneLevel();
 				}
-				getCurrentMenuItem()->handleEvent(deluge::hid::Event(deluge::hid::ButtonEvent{
-				    .which = b,
-				    .on = on,
-				}));
+				*/
 			}
 		}
 	}
@@ -429,6 +431,27 @@ void SoundEditor::goUpOneLevel() {
 	}
 
 	beginScreen(oldItem);
+}
+
+void SoundEditor::tryEnterMenu(MenuItem& menu) {
+	auto next_menu = std::ref(menu);
+	auto result = menu.checkPermissionToBeginSession(currentSound, currentSourceIndex, &currentMultiRange);
+	switch (result) {
+	case MenuPermission::MUST_SELECT_RANGE:
+		currentMultiRange = nullptr;
+		menu_item::multiRangeMenu.menuItemHeadingTo = &menu;
+		next_menu = menu_item::multiRangeMenu;
+		[[fallthrough]];
+	case MenuPermission::YES:
+		navigationDepth++;
+		menuItemNavigationRecord[navigationDepth] = &next_menu.get();
+		display->setNextTransitionDirection(1);
+		beginScreen();
+		break;
+	case MenuPermission::NO:
+		// the menu entirely
+		break;
+	}
 }
 
 void SoundEditor::exitCompletely() {

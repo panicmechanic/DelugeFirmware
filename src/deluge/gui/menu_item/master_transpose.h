@@ -34,7 +34,22 @@ public:
 		ModelStackWithSoundFlags* modelStack = soundEditor.getCurrentModelStack(modelStackMemory)->addSoundFlags();
 		soundEditor.currentSound->recalculateAllVoicePhaseIncrements(modelStack);
 	}
-	MenuItem* selectButtonPress() override { return PatchedParam::selectButtonPress(); }
+
+	ActionResult handleEvent(hid::Event const& event) override {
+		hid::EventHandler handler{
+		    [this, event](hid::ButtonEvent const& buttonEvent) {
+			    auto result = PatchedParam::buttonAction(buttonEvent.which, buttonEvent.on);
+			    if (result != ActionResult::NOT_DEALT_WITH) {
+				    return result;
+			    }
+			    return Integer::handleEvent(event);
+		    },
+		    [this, event](auto _) { return Integer::handleEvent(event); },
+		};
+
+		return std::visit(handler, event);
+	}
+
 	uint8_t shouldDrawDotOnName() override { return PatchedParam::shouldDrawDotOnName(); }
 	uint8_t getPatchedParamIndex() override { return deluge::modulation::params::LOCAL_PITCH_ADJUST; }
 	uint8_t getP() override { return deluge::modulation::params::LOCAL_PITCH_ADJUST; }

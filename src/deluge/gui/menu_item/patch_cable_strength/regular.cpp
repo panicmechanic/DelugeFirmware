@@ -27,13 +27,18 @@
 namespace deluge::gui::menu_item::patch_cable_strength {
 Regular regularMenu{};
 
-MenuItem* Regular::selectButtonPress() {
-
-	// If shift held down, delete automation
-	if (Buttons::isShiftButtonPressed()) {
-		return PatchCableStrength::selectButtonPress();
-	}
-	return &source_selection::rangeMenu;
+ActionResult Regular::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC && !Buttons::isShiftButtonPressed()) {
+			    soundEditor.tryEnterMenu(source_selection::rangeMenu);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return PatchCableStrength::handleEvent(event);
+	    },
+	    [this, event](auto _) { return PatchCableStrength::handleEvent(event); },
+	};
+	return std::visit(handler, event);
 }
 
 ParamDescriptor Regular::getLearningThing() {

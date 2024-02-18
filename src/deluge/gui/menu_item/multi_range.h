@@ -28,7 +28,6 @@ public:
 	ActionResult handleEvent(hid::Event const& event) override;
 
 	void beginSession(MenuItem* navigatedBackwardFrom) override;
-	MenuItem* selectButtonPress() override;
 	void noteOnToChangeRange(int32_t noteCode);
 	bool isRangeDependent() override { return true; }
 	void deletePress();
@@ -47,6 +46,7 @@ protected:
 
 private:
 	void selectEncoderAction(int32_t offset);
+	ActionResult selectButtonPress();
 };
 
 extern MultiRange multiRangeMenu;

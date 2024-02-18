@@ -35,6 +35,20 @@ public:
 	[[nodiscard]] int32_t getMinValue() const override { return 1; }
 	[[nodiscard]] int32_t getMaxValue() const override { return kMaxNumVoicesUnison; }
 
-	MenuItem* selectButtonPress() override { return &unison::stereoSpreadMenu; }
+	ActionResult handleEvent(hid::Event const& event) override {
+		hid::EventHandler handler{
+		    [this, event](hid::ButtonEvent const& buttonEvent) {
+				if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+					soundEditor.tryEnterMenu(stereoSpreadMenu);
+					return ActionResult::DEALT_WITH;
+				}
+				return Integer::handleEvent(event);
+		    },
+		    [this, event](auto _) { return Integer::handleEvent(event); },
+		};
+
+		return std::visit(handler, event);
+	}
+
 };
 } // namespace deluge::gui::menu_item::unison

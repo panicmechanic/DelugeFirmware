@@ -39,7 +39,6 @@ public:
 	}
 
 	uint8_t shouldDrawDotOnName() final { return PatchedParam::shouldDrawDotOnName(); }
-	MenuItem* selectButtonPress() final { return PatchedParam::selectButtonPress(); }
 
 	uint8_t getPatchedParamIndex() final { return PatchedParam::getPatchedParamIndex(); }
 	MenuItem* patchingSourceShortcutPress(PatchSource s, bool previousPressStillActive = false) final {

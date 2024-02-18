@@ -37,6 +37,36 @@
 namespace deluge::gui::menu_item {
 extern bool movingCursor;
 
+ActionResult PatchCableStrength::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::ButtonEvent& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    // If shift held down, delete automation
+			    if (Buttons::isShiftButtonPressed()) {
+				    Action* action =
+				        actionLogger.getNewAction(ActionType::AUTOMATION_DELETE, ActionAddition::NOT_ALLOWED);
+
+				    char modelStackMemory[MODEL_STACK_MAX_SIZE];
+				    ModelStackWithAutoParam* modelStack = getModelStack(modelStackMemory);
+				    if (modelStack->autoParam) {
+					    modelStack->autoParam->deleteAutomation(action, modelStack);
+				    }
+
+				    display->displayPopup(l10n::get(l10n::String::STRING_FOR_AUTOMATION_DELETED));
+			    }
+			    else {
+				    soundEditor.goUpOneLevel();
+			    }
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return Decimal::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Decimal::handleEvent(event); },
+	};
+
+	return std::visit(handler, event);
+}
+
 void PatchCableStrength::beginSession(MenuItem* navigatedBackwardFrom) {
 	Decimal::beginSession(navigatedBackwardFrom);
 
@@ -219,21 +249,4 @@ uint8_t PatchCableStrength::getIndexOfPatchedParamToBlink() {
 	return soundEditor.patchingParamSelected;
 }
 
-MenuItem* PatchCableStrength::selectButtonPress() {
-
-	// If shift held down, delete automation
-	if (Buttons::isShiftButtonPressed()) {
-		Action* action = actionLogger.getNewAction(ActionType::AUTOMATION_DELETE, ActionAddition::NOT_ALLOWED);
-
-		char modelStackMemory[MODEL_STACK_MAX_SIZE];
-		ModelStackWithAutoParam* modelStack = getModelStack(modelStackMemory);
-		if (modelStack->autoParam) {
-			modelStack->autoParam->deleteAutomation(action, modelStack);
-		}
-
-		display->displayPopup(l10n::get(l10n::String::STRING_FOR_AUTOMATION_DELETED));
-		return (MenuItem*)0xFFFFFFFF; // No navigation
-	}
-	return nullptr; // Navigate back
-}
 } // namespace deluge::gui::menu_item

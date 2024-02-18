@@ -22,9 +22,11 @@ namespace deluge::gui::menu_item::source_selection {
 class Regular final : public SourceSelection {
 public:
 	using SourceSelection::SourceSelection;
+
+	ActionResult handleEvent(hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
 	ParamDescriptor getDestinationDescriptor() override;
-	MenuItem* selectButtonPress() override;
 	MenuItem* patchingSourceShortcutPress(PatchSource newS, bool previousPressStillActive) override;
 	std::string_view getTitle() const override { return l10n::getView(l10n::String::STRING_FOR_MODULATE_WITH); };
 };

@@ -25,6 +25,9 @@ namespace deluge::gui::menu_item::mpe {
 class DirectionSelector final : public Selection {
 public:
 	using Selection::Selection;
+
+	ActionResult handleEvent(hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
 	deluge::vector<std::string_view> getOptions() override {
 		using enum l10n::String;
@@ -35,7 +38,6 @@ public:
 	}
 	void readCurrentValue() override { this->setValue(whichDirection); }
 	void writeCurrentValue() override { whichDirection = this->getValue(); }
-	MenuItem* selectButtonPress() override;
 	uint8_t whichDirection;
 	[[nodiscard]] std::string_view getTitle() const override {
 		return whichDirection ? l10n::getView(l10n::String::STRING_FOR_MPE_OUTPUT)

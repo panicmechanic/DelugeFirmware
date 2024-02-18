@@ -149,6 +149,13 @@ ActionResult PatchCables::handleEvent(deluge::hid::Event const& event) {
 		    }
 		    return MenuItem::handleEvent(event);
 	    },
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return MenuItem::handleEvent(event);
+	    },
 	    [this](deluge::hid::TimerEvent const& event) {
 		    blinkShortcuts();
 		    return ActionResult::DEALT_WITH;
@@ -203,14 +210,15 @@ uint8_t PatchCables::shouldBlinkPatchingSourceShortcut(PatchSource s, uint8_t* c
 	return 255;
 }
 
-MenuItem* PatchCables::selectButtonPress() {
+void PatchCables::selectButtonPress() {
 	PatchCableSet* set = soundEditor.currentParamManager->getPatchCableSet();
 	int val = currentValue;
 
 	if (val >= set->numPatchCables) {
 		// There were no items. If the user wants to create some, they need
 		// to select a source anyway, so take them back there.
-		return MenuItem::selectButtonPress();
+		soundEditor.goUpOneLevel();
+		return;
 	}
 	PatchCable* cable = &set->patchCables[val];
 	savedVal = val;
@@ -221,13 +229,13 @@ MenuItem* PatchCables::selectButtonPress() {
 	options.clear();
 	if (cable->destinationParamDescriptor.isJustAParam()) {
 		source_selection::regularMenu.s = cable->from;
-		return &patch_cable_strength::regularMenu;
+		soundEditor.tryEnterMenu(patch_cable_strength::regularMenu);
 	}
 	else {
 		PatchSource src2 = desc.getTopLevelSource();
 		source_selection::regularMenu.s = src2;
 		source_selection::rangeMenu.s = cable->from;
-		return &patch_cable_strength::rangeMenu;
+		soundEditor.tryEnterMenu(patch_cable_strength::rangeMenu);
 	}
 }
 

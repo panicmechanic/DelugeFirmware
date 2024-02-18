@@ -31,7 +31,6 @@ public:
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
 	MIDIDevice* getDevice(int32_t deviceIndex);
 	virtual void drawValue();
-	MenuItem* selectButtonPress() override;
 	void drawPixelsForOled();
 
 private:

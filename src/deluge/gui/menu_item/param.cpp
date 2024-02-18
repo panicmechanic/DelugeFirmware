@@ -31,23 +31,6 @@
 
 namespace deluge::gui::menu_item {
 
-MenuItem* Param::selectButtonPress() {
-	if (!Buttons::isShiftButtonPressed()) { // Shift button not pressed,
-		return nullptr;                     // So navigate backwards
-	}
-
-	// If shift button pressed, delete automation
-	Action* action = actionLogger.getNewAction(ActionType::AUTOMATION_DELETE, ActionAddition::NOT_ALLOWED);
-
-	char modelStackMemory[MODEL_STACK_MAX_SIZE];
-	ModelStackWithAutoParam* modelStack = getModelStack(modelStackMemory);
-
-	modelStack->autoParam->deleteAutomation(action, modelStack);
-
-	display->displayPopup(l10n::get(l10n::String::STRING_FOR_AUTOMATION_DELETED));
-	return (MenuItem*)0xFFFFFFFF; // Don't navigate away
-}
-
 ActionResult Param::buttonAction(deluge::hid::Button b, bool on) {
 	using namespace deluge::hid::button;
 
@@ -68,17 +51,41 @@ ActionResult Param::buttonAction(deluge::hid::Button b, bool on) {
 		}
 		return ActionResult::DEALT_WITH;
 	}
-	// Select encoder button, used to change current parameter selection in automation view
-	// if you are already in automation view and entered an automatable parameter menu
-	else if (b == SELECT_ENC && (clipMinder || arrangerView)) {
-		if (on) {
-			if (rootUI == &automationView) {
-				selectAutomationViewParameter(clipMinder);
-				uiNeedsRendering(&automationView);
+	else if (b == SELECT_ENC) {
+		// if we're in a context where automation view can be activated, switch to it
+		//
+		// XXX(sapphire): unclear if this can ever actually get hit?
+		if (clipMinder || arrangerView) {
+			if (on) {
+				if (rootUI == &automationView) {
+					selectAutomationViewParameter(clipMinder);
+					uiNeedsRendering(&automationView);
+					return ActionResult::DEALT_WITH;
+				}
 			}
 		}
+
+		if (on) {
+			if (Buttons::isShiftButtonPressed()) {
+				// If shift button pressed, delete automation
+				Action* action = actionLogger.getNewAction(ActionType::AUTOMATION_DELETE, ActionAddition::NOT_ALLOWED);
+
+				char modelStackMemory[MODEL_STACK_MAX_SIZE];
+				ModelStackWithAutoParam* modelStack = getModelStack(modelStackMemory);
+
+				modelStack->autoParam->deleteAutomation(action, modelStack);
+
+				display->displayPopup(l10n::get(l10n::String::STRING_FOR_AUTOMATION_DELETED));
+			}
+			else {
+				// otherwise, leave
+				soundEditor.goUpOneLevel();
+			}
+		}
+
 		return ActionResult::DEALT_WITH;
 	}
+
 	return ActionResult::NOT_DEALT_WITH;
 }
 

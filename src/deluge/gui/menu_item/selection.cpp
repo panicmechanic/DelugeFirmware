@@ -4,6 +4,7 @@
 #include "hid/display/display.h"
 
 namespace deluge::gui::menu_item {
+
 void Selection::drawValue() {
 	if (display->haveOLED()) {
 		renderUIsForOled();

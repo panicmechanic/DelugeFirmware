@@ -23,14 +23,25 @@
 namespace deluge::gui::menu_item::source_selection {
 Range rangeMenu{};
 
+ActionResult Range::handleEvent(const hid::Event& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    soundEditor.tryEnterMenu(patch_cable_strength::rangeMenu);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return SourceSelection::handleEvent(event);
+	    },
+	    [this, event](auto _) { return SourceSelection::handleEvent(event); },
+	};
+
+	return std::visit(handler, event);
+}
+
 ParamDescriptor Range::getDestinationDescriptor() {
 	ParamDescriptor descriptor{};
 	descriptor.setToHaveParamAndSource(soundEditor.patchingParamSelected, regularMenu.s);
 	return descriptor;
-}
-
-MenuItem* Range::selectButtonPress() {
-	return &patch_cable_strength::rangeMenu;
 }
 
 MenuItem* Range::patchingSourceShortcutPress(PatchSource newS, bool previousPressStillActive) {

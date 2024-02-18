@@ -11,7 +11,6 @@ public:
 	ActionResult handleEvent(deluge::hid::Event const& event) final;
 
 	void readValueAgain() final;
-	MenuItem* selectButtonPress() final;
 	uint8_t shouldBlinkPatchingSourceShortcut(PatchSource s, uint8_t* colour) final;
 
 	void drawPixelsForOled() final;
@@ -32,6 +31,7 @@ public:
 
 private:
 	void selectEncoderAction(int32_t offset);
+	void selectButtonPress();
 };
 
 } // namespace deluge::gui::menu_item

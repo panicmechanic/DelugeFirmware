@@ -16,10 +16,26 @@
  */
 
 #include "direction_selector.h"
+#include "gui/ui/sound_editor.h"
 #include "io/midi/midi_device.h"
 #include "zone_selector.h"
 
 namespace deluge::gui::menu_item::mpe {
+
+ActionResult DirectionSelector::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::ButtonEvent const& buttonEvent) {
+		    if (buttonEvent.on && buttonEvent.which == hid::button::SELECT_ENC) {
+			    soundEditor.tryEnterMenu(zoneSelectorMenu);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return Selection::handleEvent(event);
+	    },
+	    [this, event](auto) { return Selection::handleEvent(event); },
+	};
+
+	return std::visit(handler, event);
+}
 
 void DirectionSelector::beginSession(MenuItem* navigatedBackwardFrom) {
 	if (navigatedBackwardFrom == nullptr) {
@@ -28,7 +44,4 @@ void DirectionSelector::beginSession(MenuItem* navigatedBackwardFrom) {
 	Selection::beginSession(navigatedBackwardFrom);
 }
 
-MenuItem* DirectionSelector::selectButtonPress() {
-	return &zoneSelectorMenu;
-}
 } // namespace deluge::gui::menu_item::mpe

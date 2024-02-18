@@ -25,6 +25,9 @@ namespace deluge::gui::menu_item::mpe {
 class ZoneSelector final : public Selection {
 public:
 	using Selection::Selection;
+
+	ActionResult handleEvent(hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
 	void readCurrentValue() override { this->setValue(whichZone); }
 	void writeCurrentValue() override { whichZone = this->getValue(); }
@@ -37,7 +40,6 @@ public:
 		};
 	}
 
-	MenuItem* selectButtonPress() override;
 	uint8_t whichZone;
 };
 
