@@ -8,6 +8,9 @@ public:
 	using MenuItem::MenuItem;
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) final;
 	void selectEncoderAction(int32_t offset) final;
+
+	ActionResult handleEvent(deluge::hid::Event const& event) final;
+
 	void readValueAgain() final;
 	MenuItem* selectButtonPress() final;
 	uint8_t shouldBlinkPatchingSourceShortcut(PatchSource s, uint8_t* colour) final;
@@ -19,7 +22,6 @@ public:
 	void renderOptions();
 	void blinkShortcuts();
 	void blinkShortcutsSoon();
-	ActionResult timerCallback() override;
 
 	int32_t savedVal = 0;
 	int32_t currentValue = 0;

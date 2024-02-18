@@ -2,6 +2,7 @@
 #include "gui/ui/sound_editor.h"
 #include "gui/ui_timer_manager.h"
 #include "hid/display/display.h"
+#include "hid/input_event.h"
 #include "modulation/params/param_manager.h"
 #include "modulation/patch/patch_cable_set.h"
 #include "patch_cable_strength/range.h"
@@ -10,6 +11,7 @@
 #include "source_selection/range.h"
 #include "source_selection/regular.h"
 #include "util/functions.h"
+#include <variant>
 
 namespace deluge::gui::menu_item {
 
@@ -138,15 +140,19 @@ void PatchCables::selectEncoderAction(int32_t offset) {
 	readValueAgain(); // redraw
 }
 
+ActionResult PatchCables::handleEvent(deluge::hid::Event const& event) {
+	return std::visit(deluge::hid::EventHandler{[](auto arg) { return ActionResult::NOT_DEALT_WITH; },
+	                                            [this](deluge::hid::TimerEvent const& event) {
+		                                            blinkShortcuts();
+		                                            return ActionResult::DEALT_WITH;
+	                                            }},
+	                  event);
+}
+
 void PatchCables::blinkShortcutsSoon() {
 	// some throttling so menu scrolling doesn't become a lightning storm of flashes
 	uiTimerManager.setTimer(TimerName::UI_SPECIFIC, display->haveOLED() ? 500 : 200);
 	uiTimerManager.unsetTimer(TimerName::SHORTCUT_BLINK);
-}
-
-ActionResult PatchCables::timerCallback() {
-	blinkShortcuts();
-	return ActionResult::DEALT_WITH;
 }
 
 void PatchCables::blinkShortcuts() {

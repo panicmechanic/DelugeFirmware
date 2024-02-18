@@ -770,8 +770,11 @@ void SoundEditor::selectEncoderAction(int8_t offset) {
 }
 
 // TIMER_UI_SPECIFIC is only set by a menu item
+// XXX: should plumb specific timer in to here
 ActionResult SoundEditor::timerCallback() {
-	return getCurrentMenuItem()->timerCallback();
+	return getCurrentMenuItem()->handleEvent(deluge::hid::Event(deluge::hid::TimerEvent{
+	    .which = TimerName::UI_SPECIFIC,
+	}));
 }
 
 void SoundEditor::markInstrumentAsEdited() {

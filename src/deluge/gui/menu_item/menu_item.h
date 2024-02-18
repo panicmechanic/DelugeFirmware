@@ -21,6 +21,7 @@
 #include "gui/l10n/l10n.h"
 #include "gui/l10n/strings.h"
 #include "hid/buttons.h"
+#include "hid/input_event.h"
 #include <cstdint>
 #include <span>
 
@@ -55,6 +56,8 @@ public:
 	const deluge::l10n::String name;
 	[[nodiscard]] virtual std::string_view getName() const { return deluge::l10n::getView(name); }
 
+	virtual ActionResult handleEvent(deluge::hid::Event const& event) { return ActionResult::NOT_DEALT_WITH; };
+
 	virtual ActionResult buttonAction(deluge::hid::Button b, bool on) { return ActionResult::NOT_DEALT_WITH; }
 	virtual void horizontalEncoderAction(int32_t offset) {}
 	virtual void selectEncoderAction(int32_t offset) {}
@@ -84,8 +87,6 @@ public:
 	virtual bool shouldBlinkLearnLed() { return false; }
 	virtual bool isRangeDependent() { return false; }
 	virtual bool usesAffectEntire() { return false; }
-
-	virtual ActionResult timerCallback() { return ActionResult::DEALT_WITH; }
 
 	/// Can get overridden by getTitle(). Actual max num chars for OLED display is 14.
 	deluge::l10n::String title;
