@@ -25,6 +25,9 @@ public:
 	Integer(l10n::String newName, int32_t newP = 0) : PatchedParam(newP), IntegerContinuous(newName) {}
 	Integer(l10n::String newName, l10n::String title, int32_t newP = 0)
 	    : PatchedParam(newP), IntegerContinuous(newName, title) {}
+
+	ActionResult handleEvent(deluge::hid::Event const& event) override;
+
 	// 7SEG Only
 	void drawValue() override { display->setTextAsNumber(this->getValue(), shouldDrawDotOnName()); }
 
@@ -37,10 +40,6 @@ public:
 
 	uint8_t shouldDrawDotOnName() final { return PatchedParam::shouldDrawDotOnName(); }
 	MenuItem* selectButtonPress() final { return PatchedParam::selectButtonPress(); }
-	// this button action function definition should not be required as it should be inherited
-	// from the param class, however it does not work if the definition is removed, so there
-	// is likely a multi-inheritance issue that needs to be resolved
-	ActionResult buttonAction(deluge::hid::Button b, bool on) final { return PatchedParam::buttonAction(b, on); }
 
 	uint8_t getPatchedParamIndex() final { return PatchedParam::getPatchedParamIndex(); }
 	MenuItem* patchingSourceShortcutPress(PatchSource s, bool previousPressStillActive = false) final {

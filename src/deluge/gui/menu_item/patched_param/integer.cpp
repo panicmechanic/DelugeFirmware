@@ -52,6 +52,16 @@ void Integer::writeCurrentValue() {
 	// soundEditor.currentSound, currentSong, getCurrentClip(), true, true);
 }
 
+ActionResult Integer::handleEvent(deluge::hid::Event const& event) {
+	auto handler = deluge::hid::EventHandler{
+	    [this](deluge::hid::ButtonEvent const& event) {
+		    return deluge::gui::menu_item::PatchedParam::buttonAction(event.which, event.on);
+	    },
+	    [](auto arg) { return ActionResult::NOT_DEALT_WITH; },
+	};
+	return std::visit(handler, event);
+}
+
 int32_t Integer::getFinalValue() {
 	if (this->getValue() == kMaxMenuValue) {
 		return 2147483647;

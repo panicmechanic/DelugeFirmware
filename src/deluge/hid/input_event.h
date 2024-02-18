@@ -42,8 +42,10 @@ public:
 	TimerName which;
 };
 
+/// Event variant. Includes all possible event types. Use `std::visit(deluge::hid::EventHandler{})` to dispatch.
 using Event = std::variant<PadEvent, ButtonEvent, EncoderEvent, TimerEvent>;
 
+/// Template for use with `std::visit` and `Event`.
 template <class... Ts>
 struct EventHandler : Ts... {
 	using Ts::operator()...;

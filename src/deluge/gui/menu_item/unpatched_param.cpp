@@ -83,8 +83,14 @@ ParamSet* UnpatchedParam::getParamSet() {
 	return soundEditor.currentParamManager->getUnpatchedParamSet();
 }
 
-// ---------------------------------------
-
-// ---------------------------------------
+ActionResult UnpatchedParam::handleEvent(deluge::hid::Event const& event) {
+	auto handler = deluge::hid::EventHandler{
+	    [this](deluge::hid::ButtonEvent const& event) {
+		    return deluge::gui::menu_item::Param::buttonAction(event.which, event.on);
+	    },
+	    [](auto arg) { return ActionResult::NOT_DEALT_WITH; },
+	};
+	return std::visit(handler, event);
+}
 
 } // namespace deluge::gui::menu_item

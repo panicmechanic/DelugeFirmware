@@ -261,7 +261,10 @@ ActionResult SoundEditor::buttonAction(deluge::hid::Button b, bool on, bool inCa
 				else {
 					goUpOneLevel();
 				}
-				getCurrentMenuItem()->buttonAction(b, on);
+				getCurrentMenuItem()->handleEvent(deluge::hid::Event(deluge::hid::ButtonEvent{
+				    .which = b,
+				    .on = on,
+				}));
 			}
 		}
 	}
@@ -400,7 +403,10 @@ ActionResult SoundEditor::buttonAction(deluge::hid::Button b, bool on, bool inCa
 	}
 
 	else {
-		return getCurrentMenuItem()->buttonAction(b, on);
+		return getCurrentMenuItem()->handleEvent(deluge::hid::Event(deluge::hid::ButtonEvent{
+		    .which = b,
+		    .on = on,
+		}));
 	}
 
 	return ActionResult::DEALT_WITH;
