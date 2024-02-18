@@ -629,7 +629,7 @@ stopThat: {}
 
 		// If we found nothing...
 		if (currentParamShorcutX == 255) {
-			uiTimerManager.unsetTimer(TIMER_SHORTCUT_BLINK);
+			uiTimerManager.unsetTimer(TimerName::SHORTCUT_BLINK);
 		}
 
 		// Or if we found something...
@@ -683,7 +683,7 @@ void SoundEditor::blinkShortcut() {
 		if ((counterForNow & paramShortcutBlinkFrequency) == 0) {
 			PadLEDs::flashMainPad(currentParamShorcutX, currentParamShorcutY);
 		}
-		uiTimerManager.setTimer(TIMER_SHORTCUT_BLINK, 180);
+		uiTimerManager.setTimer(TimerName::SHORTCUT_BLINK, 180);
 	}
 
 	else {
@@ -696,7 +696,7 @@ void SoundEditor::blinkShortcut() {
 				}
 			}
 		}
-		uiTimerManager.setTimer(TIMER_SHORTCUT_BLINK, 20);
+		uiTimerManager.setTimer(TimerName::SHORTCUT_BLINK, 20);
 	}
 
 	shortcutBlinkCounter++;
