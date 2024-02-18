@@ -28,6 +28,17 @@ public:
 	RetriggerPhase(l10n::String newName, l10n::String title_format_str, bool newForModulator = false)
 	    : Decimal(newName), FormattedTitle(title_format_str), forModulator(newForModulator) {}
 
+	ActionResult handleEvent(deluge::hid::Event const& event) {
+		if (this->getValue() >= 0) {
+			// Retrigger enabled, edit as a decimal
+			return Decimal::handleEvent(event);
+		}
+		else {
+			// Disabled, no handling required
+			return ActionResult::NOT_DEALT_WITH;
+		}
+	}
+
 	[[nodiscard]] std::string_view getTitle() const override { return FormattedTitle::title(); }
 
 	[[nodiscard]] int32_t getMinValue() const override { return -soundEditor.numberEditSize; }
@@ -73,12 +84,6 @@ public:
 		}
 		else {
 			Decimal::drawPixelsForOled();
-		}
-	}
-
-	void horizontalEncoderAction(int32_t offset) override {
-		if (this->getValue() >= 0) {
-			Decimal::horizontalEncoderAction(offset);
 		}
 	}
 

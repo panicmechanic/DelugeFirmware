@@ -27,6 +27,18 @@
 
 namespace deluge::gui::menu_item {
 
+ActionResult Range::handleEvent(hid::Event const& event) {
+	return std::visit(hid::EventHandler{[this](hid::EncoderEvent const& event) {
+		                             if (event.name == hid::encoders::EncoderName::SCROLL_X) {
+			                             this->horizontalEncoderAction(event.offset);
+			                             return ActionResult::DEALT_WITH;
+		                             }
+		                             return ActionResult::NOT_DEALT_WITH;
+	                             },
+	                             [](auto _) { return ActionResult::NOT_DEALT_WITH; }},
+	           event);
+}
+
 void Range::beginSession(MenuItem* navigatedBackwardFrom) {
 
 	soundEditor.editingRangeEdge = RangeEdit::OFF;

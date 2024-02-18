@@ -58,7 +58,6 @@ public:
 
 	virtual ActionResult handleEvent(deluge::hid::Event const& event) { return ActionResult::NOT_DEALT_WITH; };
 
-	virtual void horizontalEncoderAction(int32_t offset) {}
 	virtual void selectEncoderAction(int32_t offset) {}
 	virtual void beginSession(MenuItem* navigatedBackwardFrom = nullptr){};
 	virtual bool isRelevant(Sound* sound, int32_t whichThing) { return true; }

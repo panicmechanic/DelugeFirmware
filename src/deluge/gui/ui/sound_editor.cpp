@@ -717,7 +717,14 @@ ActionResult SoundEditor::horizontalEncoderAction(int32_t offset) {
 		return getRootUI()->horizontalEncoderAction(offset);
 	}
 	else {
-		getCurrentMenuItem()->horizontalEncoderAction(offset);
+		// XXX: we should probably forward the ActionResult from the event handler here, but it's unclear if that will
+		// break things upstream. It might allow us to get rid of the RootUI hack above though...
+		//
+		// i.e. always try the menu item and if that fails, forward to the current RootUI
+		getCurrentMenuItem()->handleEvent(deluge::hid::Event(deluge::hid::EncoderEvent{
+		    .name = deluge::hid::encoders::EncoderName::SCROLL_X,
+		    .offset = offset,
+		}));
 		return ActionResult::DEALT_WITH;
 	}
 }

@@ -31,19 +31,23 @@ class Range : public Value<int32_t> {
 public:
 	using Value::Value;
 
+	ActionResult handleEvent(deluge::hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom) override;
-	void horizontalEncoderAction(int32_t offset) final;
 	bool cancelEditingIfItsOn();
 
 protected:
 	virtual void getText(char* buffer, int32_t* getLeftLength = nullptr, int32_t* getRightLength = nullptr,
 	                     bool mayShowJustOne = true) = 0;
 	virtual bool mayEditRangeEdge(RangeEdit whichEdge) { return true; }
-	virtual void drawValue() { this->drawValue(0); }
+	void drawValue() override { this->drawValue(0); }
 	void drawValue(int32_t startPos, bool renderSidebarToo = true);
 	void drawValueForEditingRange(bool blinkImmediately);
 
 	// OLED ONLY
-	void drawPixelsForOled();
+	void drawPixelsForOled() override;
+
+private:
+	void horizontalEncoderAction(int32_t offset);
 };
 } // namespace deluge::gui::menu_item

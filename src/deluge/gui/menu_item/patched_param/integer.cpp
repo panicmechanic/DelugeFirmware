@@ -53,7 +53,7 @@ void Integer::writeCurrentValue() {
 }
 
 ActionResult Integer::handleEvent(deluge::hid::Event const& event) {
-	auto handler = deluge::hid::EventHandler{
+	deluge::hid::EventHandler handler{
 	    [this](deluge::hid::ButtonEvent const& event) {
 		    return deluge::gui::menu_item::PatchedParam::buttonAction(event.which, event.on);
 	    },

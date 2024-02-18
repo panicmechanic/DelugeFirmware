@@ -27,6 +27,17 @@ class Volts final : public Decimal, public FormattedTitle {
 public:
 	Volts(l10n::String name, l10n::String title_format_str) : Decimal(name), FormattedTitle(title_format_str) {}
 
+	ActionResult handleEvent(deluge::hid::Event const& event) override {
+		if (this->getValue() == 0) {
+			// 0 means we're in Hz/V mode and not editing as a decimal. We don't actually need to do anything.
+			return ActionResult::NOT_DEALT_WITH;
+		}
+		else {
+			// Otherwise, we're editing as a decimal and should forward to that handler.
+			return Decimal::handleEvent(event);
+		}
+	}
+
 	[[nodiscard]] std::string_view getTitle() const override { return FormattedTitle::title(); }
 
 	[[nodiscard]] int32_t getMinValue() const override { return 0; }
@@ -55,12 +66,6 @@ public:
 		}
 		else {
 			Decimal::drawValue();
-		}
-	}
-
-	void horizontalEncoderAction(int32_t offset) override {
-		if (this->getValue() != 0) {
-			Decimal::horizontalEncoderAction(offset);
 		}
 	}
 };

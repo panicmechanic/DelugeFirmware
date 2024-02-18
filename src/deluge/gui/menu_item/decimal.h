@@ -24,9 +24,11 @@ namespace deluge::gui::menu_item {
 class Decimal : public Number {
 public:
 	using Number::Number;
+
+	ActionResult handleEvent(deluge::hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
 	void selectEncoderAction(int32_t offset) final;
-	void horizontalEncoderAction(int32_t offset) override;
 
 protected:
 	void drawValue() override;
@@ -39,6 +41,7 @@ protected:
 	virtual void drawActualValue(bool justDidHorizontalScroll = false);
 
 private:
+	void horizontalEncoderAction(int32_t offset);
 	void scrollToGoodPos();
 };
 

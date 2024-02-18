@@ -29,6 +29,22 @@
 
 namespace deluge::gui::menu_item {
 
+hid::EventHandler handler{
+
+};
+
+ActionResult Decimal::handleEvent(deluge::hid::Event const& event) {
+	return std::visit(hid::EventHandler{[this](hid::EncoderEvent const& event) {
+		                                    if (event.name == hid::encoders::EncoderName::SCROLL_X) {
+			                                    this->horizontalEncoderAction(event.offset);
+			                                    return ActionResult::DEALT_WITH;
+		                                    }
+		                                    return ActionResult::NOT_DEALT_WITH;
+	                                    },
+	                                    [](auto event) { return ActionResult::NOT_DEALT_WITH; }},
+	                  event);
+}
+
 void Decimal::beginSession(MenuItem* navigatedBackwardFrom) {
 	soundEditor.numberScrollAmount = 0;
 	soundEditor.numberEditPos = getDefaultEditPos();
