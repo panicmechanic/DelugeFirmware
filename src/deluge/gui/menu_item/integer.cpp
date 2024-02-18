@@ -22,6 +22,20 @@
 
 namespace deluge::gui::menu_item {
 
+ActionResult Integer::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+		    }
+
+		    return Number::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Number::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void Integer::selectEncoderAction(int32_t offset) {
 	this->setValue(this->getValue() + offset);
 	int32_t maxValue = getMaxValue();
@@ -34,8 +48,6 @@ void Integer::selectEncoderAction(int32_t offset) {
 			this->setValue(minValue);
 		}
 	}
-
-	Number::selectEncoderAction(offset);
 }
 
 void Integer::drawValue() {

@@ -7,7 +7,6 @@ class PatchCables : public MenuItem {
 public:
 	using MenuItem::MenuItem;
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) final;
-	void selectEncoderAction(int32_t offset) final;
 
 	ActionResult handleEvent(deluge::hid::Event const& event) final;
 
@@ -30,6 +29,9 @@ public:
 
 	PatchSource blinkSrc = PatchSource::NOT_AVAILABLE;
 	PatchSource blinkSrc2 = PatchSource::NOT_AVAILABLE;
+
+private:
+	void selectEncoderAction(int32_t offset);
 };
 
 } // namespace deluge::gui::menu_item

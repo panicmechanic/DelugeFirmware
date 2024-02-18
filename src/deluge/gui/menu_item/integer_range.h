@@ -25,13 +25,18 @@ class IntegerRange final : public Range {
 public:
 	IntegerRange(l10n::String newName, l10n::String title, int32_t newMin, int32_t newMax)
 	    : Range(newName, title), minValue(newMin), maxValue(newMax) {}
+
+	ActionResult handleEvent(hid::Event const & event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom) override;
 	void getText(char* buffer, int32_t* getLeftLength, int32_t* getRightLength, bool mayShowJustOne) override;
-	void selectEncoderAction(int32_t offset) override;
 	int32_t getRandomValueInRange();
 
 	int32_t lower, upper;
 
 	int32_t minValue, maxValue;
+
+private:
+	void selectEncoderAction(int32_t offset);
 };
 } // namespace deluge::gui::menu_item

@@ -25,8 +25,10 @@ namespace deluge::gui::menu_item {
 class SourceSelection : public Value<int32_t> {
 public:
 	using Value::Value;
+
+	ActionResult handleEvent(deluge::hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
-	void selectEncoderAction(int32_t offset) final;
 	virtual ParamDescriptor getDestinationDescriptor() = 0;
 	uint8_t getIndexOfPatchedParamToBlink() final;
 	uint8_t shouldBlinkPatchingSourceShortcut(PatchSource s, uint8_t* colour) final;
@@ -42,6 +44,8 @@ public:
 	PatchSource s;
 
 protected:
+	void selectEncoderAction(int32_t offset);
+
 	bool sourceIsAllowed(PatchSource source);
 	uint8_t shouldDrawDotOnValue();
 };

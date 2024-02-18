@@ -34,15 +34,25 @@ hid::EventHandler handler{
 };
 
 ActionResult Decimal::handleEvent(deluge::hid::Event const& event) {
-	return std::visit(hid::EventHandler{[this](hid::EncoderEvent const& event) {
-		                                    if (event.name == hid::encoders::EncoderName::SCROLL_X) {
-			                                    this->horizontalEncoderAction(event.offset);
-			                                    return ActionResult::DEALT_WITH;
-		                                    }
-		                                    return ActionResult::NOT_DEALT_WITH;
-	                                    },
-	                                    [](auto event) { return ActionResult::NOT_DEALT_WITH; }},
-	                  event);
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    using hid::encoders::EncoderName;
+		    switch (encoderEvent.name) {
+		    case EncoderName::SCROLL_X:
+			    this->horizontalEncoderAction(encoderEvent.offset);
+			    break;
+		    case EncoderName::SELECT:
+			    this->selectEncoderAction(encoderEvent.offset);
+			    // completely override Number's select encoder behavior
+			    return ActionResult::DEALT_WITH;
+		    default:
+			    break;
+		    }
+		    return Number::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Number::handleEvent(event); },
+	};
+	return std::visit(handler, event);
 }
 
 void Decimal::beginSession(MenuItem* navigatedBackwardFrom) {
@@ -69,7 +79,6 @@ void Decimal::drawValue() {
 }
 
 void Decimal::selectEncoderAction(int32_t offset) {
-
 	this->setValue(this->getValue() + offset * soundEditor.numberEditSize);
 
 	// If turned down
@@ -89,8 +98,6 @@ void Decimal::selectEncoderAction(int32_t offset) {
 	}
 
 	scrollToGoodPos();
-
-	Number::selectEncoderAction(offset);
 }
 
 bool movingCursor = false; // Sorry, ugly hack.

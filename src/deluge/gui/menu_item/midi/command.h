@@ -28,9 +28,11 @@ class Command final : public MenuItem {
 public:
 	Command(l10n::String newName, GlobalMIDICommand newCommandNumber = GlobalMIDICommand::PLAYBACK_RESTART)
 	    : MenuItem(newName), commandNumber(newCommandNumber) {}
+
+	ActionResult handleEvent(deluge::hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom) override;
 	void drawValue() const;
-	void selectEncoderAction(int32_t offset) override;
 	bool allowsLearnMode() override { return true; }
 	bool shouldBlinkLearnLed() override { return true; }
 	void unlearnAction() override;
@@ -38,7 +40,7 @@ public:
 	void learnProgramChange(MIDIDevice* device, int32_t channel, int32_t programNumber) override;
 	void learnCC(MIDIDevice* device, int32_t channel, int32_t ccNumber, int32_t value) override;
 
-	void drawPixelsForOled();
+	void drawPixelsForOled() override;
 
 	GlobalMIDICommand commandNumber;
 };

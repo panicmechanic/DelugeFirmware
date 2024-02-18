@@ -1385,7 +1385,10 @@ void PerformanceSessionView::selectEncoderAction(int8_t offset) {
 		}
 	}
 	if (getCurrentUI() == &soundEditor) {
-		soundEditor.getCurrentMenuItem()->selectEncoderAction(offset);
+		soundEditor.getCurrentMenuItem()->handleEvent(deluge::hid::EncoderEvent{
+		    .name = hid::encoders::EncoderName::SELECT,
+		    .offset = offset,
+		});
 	}
 	else {
 		if (currentSong->lastClipInstanceEnteredStartPos == -1) {

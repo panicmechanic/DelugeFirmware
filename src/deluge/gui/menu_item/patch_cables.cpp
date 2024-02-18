@@ -141,12 +141,21 @@ void PatchCables::selectEncoderAction(int32_t offset) {
 }
 
 ActionResult PatchCables::handleEvent(deluge::hid::Event const& event) {
-	return std::visit(deluge::hid::EventHandler{[](auto arg) { return ActionResult::NOT_DEALT_WITH; },
-	                                            [this](deluge::hid::TimerEvent const& event) {
-		                                            blinkShortcuts();
-		                                            return ActionResult::DEALT_WITH;
-	                                            }},
-	                  event);
+	hid::EventHandler handler{deluge::hid::EventHandler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return MenuItem::handleEvent(event);
+	    },
+	    [this](deluge::hid::TimerEvent const& event) {
+		    blinkShortcuts();
+		    return ActionResult::DEALT_WITH;
+	    },
+	    [this, event](auto _) { return MenuItem::handleEvent(event); },
+	}};
+	return std::visit(handler, event);
 }
 
 void PatchCables::blinkShortcutsSoon() {

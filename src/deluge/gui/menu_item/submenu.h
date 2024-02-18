@@ -37,9 +37,10 @@ public:
 	Submenu(l10n::String newName, l10n::String title, std::span<MenuItem*> newItems)
 	    : MenuItem(newName, title), items{newItems.begin(), newItems.end()} {}
 
+	ActionResult handleEvent(hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
 	void updateDisplay();
-	void selectEncoderAction(int32_t offset) final;
 	MenuItem* selectButtonPress() final;
 	void readValueAgain() final { updateDisplay(); }
 	void unlearnAction() final;
@@ -51,6 +52,9 @@ public:
 
 	deluge::vector<MenuItem*> items;
 	typename decltype(items)::iterator current_item_;
+
+private:
+	void selectEncoderAction(int32_t offset);
 };
 
 } // namespace deluge::gui::menu_item

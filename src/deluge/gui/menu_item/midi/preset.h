@@ -30,6 +30,28 @@ public:
 
 	[[nodiscard]] int32_t getMaxValue() const override { return 128; } // Probably not needed cos we override below...
 
+	ActionResult handleEvent(hid::Event const& event) override {
+		hid::EventHandler handler{
+		    [this, event](hid::EncoderEvent const& encoderEvent) {
+			    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+				    this->setValue(this->getValue() + encoderEvent.offset);
+				    if (this->getValue() >= 129) {
+					    this->setValue(this->getValue() - 129);
+				    }
+				    else if (this->getValue() < 0) {
+					    this->setValue(this->getValue() + 129);
+				    }
+				    // Jump directly to the grandparent handler for select action, since
+				    // we replaced the custom behavior for Integer
+				    return Number::handleEvent(event);
+			    }
+			    return Integer::handleEvent(event);
+		    },
+		    [this, event](auto _) { return Integer::handleEvent(event); },
+		};
+		return std::visit(handler, event);
+	}
+
 	void drawInteger(int32_t textWidth, int32_t textHeight, int32_t yPixel) {
 		char buffer[12];
 		char const* text;
@@ -56,17 +78,6 @@ public:
 
 	bool isRelevant(Sound* sound, int32_t whichThing) override {
 		return getCurrentOutputType() == OutputType::MIDI_OUT;
-	}
-
-	void selectEncoderAction(int32_t offset) override {
-		this->setValue(this->getValue() + offset);
-		if (this->getValue() >= 129) {
-			this->setValue(this->getValue() - 129);
-		}
-		else if (this->getValue() < 0) {
-			this->setValue(this->getValue() + 129);
-		}
-		Number::selectEncoderAction(offset);
 	}
 };
 } // namespace deluge::gui::menu_item::midi

@@ -34,6 +34,21 @@ namespace deluge::gui::menu_item {
 
 MultiRange multiRangeMenu{};
 
+ActionResult MultiRange::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+			    return ActionResult::DEALT_WITH;
+		    }
+
+		    return Range::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Range::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void MultiRange::beginSession(MenuItem* navigatedBackwardFrom) {
 
 	// If there's already a range (e.g. because we just came back out of a menu)...

@@ -89,6 +89,38 @@ public:
 		                                       OLED_MAIN_WIDTH_PIXELS, kTextSpacingX, kTextSizeYUpdated);
 	}
 
+	ActionResult handleEvent(hid::Event const& event) override {
+		hid::EventHandler handler{
+		    [this, event](hid::EncoderEvent const& encoderEvent) {
+			    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+				    if (this->getValue() == MIDI_CHANNEL_NONE) {
+					    if (encoderEvent.offset > 0) {
+						    this->setValue(0);
+					    }
+					    else if (encoderEvent.offset < 0) {
+						    this->setValue(MIDI_CHANNEL_MPE_UPPER_ZONE);
+					    }
+				    }
+				    else {
+					    this->setValue(this->getValue() + encoderEvent.offset);
+					    if ((this->getValue() >= NUM_CHANNELS) || (this->getValue() < 0)) {
+						    this->setValue(MIDI_CHANNEL_NONE);
+						    midiInput.clear();
+						    renderDisplay();
+						    return ActionResult::DEALT_WITH;
+					    }
+				    }
+				    // skip to the grandparent handler because we don't want the default
+				    // "Integer" behavior
+				    return Number::handleEvent(event);
+			    }
+			    return Integer::handleEvent(event);
+		    },
+		    [this, event](auto _) { return Integer::handleEvent(event); },
+		};
+		return std::visit(handler, event);
+	}
+
 	void drawValue() override {
 		if (this->getValue() == MIDI_CHANNEL_MPE_LOWER_ZONE) {
 			display->setText(l10n::get(l10n::String::STRING_FOR_MPE_LOWER_ZONE));
@@ -102,27 +134,6 @@ public:
 		else {
 			display->setTextAsNumber(this->getValue() + 1);
 		}
-	}
-
-	void selectEncoderAction(int32_t offset) override {
-		if (this->getValue() == MIDI_CHANNEL_NONE) {
-			if (offset > 0) {
-				this->setValue(0);
-			}
-			else if (offset < 0) {
-				this->setValue(MIDI_CHANNEL_MPE_UPPER_ZONE);
-			}
-		}
-		else {
-			this->setValue(this->getValue() + offset);
-			if ((this->getValue() >= NUM_CHANNELS) || (this->getValue() < 0)) {
-				this->setValue(MIDI_CHANNEL_NONE);
-				midiInput.clear();
-				renderDisplay();
-				return;
-			}
-		}
-		Number::selectEncoderAction(offset);
 	}
 
 	void unlearnAction() {

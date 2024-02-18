@@ -111,14 +111,24 @@ void Command::drawValue() const {
 	display->setText(output);
 }
 
-void Command::selectEncoderAction(int32_t offset) {
-	midiEngine.globalMIDICommands[util::to_underlying(commandNumber)].clear();
-	if (display->haveOLED()) {
-		renderUIsForOled();
-	}
-	else {
-		drawValue();
-	}
+ActionResult Command::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    midiEngine.globalMIDICommands[util::to_underlying(commandNumber)].clear();
+			    if (display->haveOLED()) {
+				    renderUIsForOled();
+			    }
+			    else {
+				    drawValue();
+			    }
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return MenuItem::handleEvent(event);
+	    },
+	    [this, event](auto _) { return MenuItem::handleEvent(event); },
+	};
+	return std::visit(handler, event);
 }
 
 void Command::unlearnAction() {

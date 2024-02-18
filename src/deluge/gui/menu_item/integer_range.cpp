@@ -23,6 +23,20 @@
 
 namespace deluge::gui::menu_item {
 
+ActionResult IntegerRange::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this](hid::EncoderEvent const& event) {
+		    if (event.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(event.offset);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return Range::handleEvent(event);
+	    },
+	    [this](auto event) { return Range::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void IntegerRange::beginSession(MenuItem* navigatedBackwardFrom) {
 	Range::beginSession(navigatedBackwardFrom);
 	if (display->haveOLED()) {

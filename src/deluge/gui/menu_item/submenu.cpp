@@ -3,6 +3,21 @@
 #include "util/container/static_vector.hpp"
 
 namespace deluge::gui::menu_item {
+
+ActionResult Submenu::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return MenuItem::handleEvent(event);
+	    },
+	    [this, event](auto _) { return MenuItem::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void Submenu::beginSession(MenuItem* navigatedBackwardFrom) {
 	current_item_ = items.begin();
 	soundEditor.menuCurrentScroll = 0;

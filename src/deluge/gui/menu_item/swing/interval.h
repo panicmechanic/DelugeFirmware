@@ -28,19 +28,30 @@ public:
 	void writeCurrentValue() override { currentSong->changeSwingInterval(this->getValue()); }
 	// triplet/dotted not yet supported
 	size_t size() override { return SYNC_TYPE_TRIPLET; }
-	void selectEncoderAction(int32_t offset) override { // So that there's no "off" option
-		this->setValue(this->getValue() + offset);
-		int32_t numOptions = this->size();
 
-		// Wrap value
-		if (this->getValue() >= numOptions) {
-			this->setValue(this->getValue() - (numOptions - 1));
-		}
-		else if (this->getValue() < 1) {
-			this->setValue(this->getValue() + (numOptions - 1));
-		}
+	ActionResult handleEvent(hid::Event const& event) override {
+		hid::EventHandler handler{
+		    [this, event](hid::EncoderEvent const& encoderEvent) {
+			    // custom handling of the select encoder, to provide a virtual "off"
+			    // value.
+			    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+				    this->setValue(this->getValue() + encoderEvent.offset);
+				    int32_t numOptions = this->size();
 
-		Value::selectEncoderAction(offset);
+				    // Wrap value
+				    if (this->getValue() >= numOptions) {
+					    this->setValue(this->getValue() - (numOptions - 1));
+				    }
+				    else if (this->getValue() < 1) {
+					    this->setValue(this->getValue() + (numOptions - 1));
+				    }
+				    return Value::handleEvent(event);
+			    }
+			    return Enumeration::handleEvent(event);
+		    },
+		    [this, event](auto _) { return Enumeration::handleEvent(event); },
+		};
+		return std::visit(handler, event);
 	}
 };
 

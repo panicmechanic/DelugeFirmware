@@ -28,7 +28,6 @@ public:
 	ActionResult handleEvent(deluge::hid::Event const& event) override;
 
 	void beginSession(MenuItem* navigatedBackwardFrom = nullptr) override;
-	void selectEncoderAction(int32_t offset) final;
 
 protected:
 	void drawValue() override;
@@ -42,6 +41,8 @@ protected:
 
 private:
 	void horizontalEncoderAction(int32_t offset);
+	void selectEncoderAction(int32_t offset);
+
 	void scrollToGoodPos();
 };
 

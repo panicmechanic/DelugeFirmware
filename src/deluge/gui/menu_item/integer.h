@@ -24,7 +24,8 @@ namespace deluge::gui::menu_item {
 class Integer : public Number {
 public:
 	using Number::Number;
-	void selectEncoderAction(int32_t offset) override;
+
+	ActionResult handleEvent(hid::Event const& event) override;
 
 protected:
 	void drawPixelsForOled();
@@ -32,6 +33,9 @@ protected:
 
 	// 7Seg Only
 	void drawValue() override;
+
+private:
+	void selectEncoderAction(int32_t offset);
 };
 
 class IntegerWithOff : public Integer {

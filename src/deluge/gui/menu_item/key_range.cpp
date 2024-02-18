@@ -23,6 +23,19 @@
 
 namespace deluge::gui::menu_item {
 
+ActionResult KeyRange::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+		    }
+		    return Range::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Range::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void KeyRange::selectEncoderAction(int32_t offset) {
 	int32_t const KEY_MIN = 0;
 	int32_t const KEY_MAX = 11;

@@ -130,6 +130,23 @@ void SourceSelection::drawValue() {
 	display->setText(l10n::get(text), false, drawDot);
 }
 
+ActionResult SourceSelection::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+			    return ActionResult::DEALT_WITH;
+		    }
+
+		    return Value<int32_t>::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Value<int32_t>::handleEvent(event); },
+	};
+	return std::visit(handler
+	                  ,
+	                  event);
+}
+
 void SourceSelection::beginSession(MenuItem* navigatedBackwardFrom) {
 	this->setValue(0);
 

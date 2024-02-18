@@ -12,6 +12,20 @@ void Enumeration::beginSession(MenuItem* navigatedBackwardFrom) {
 	}
 }
 
+ActionResult Enumeration::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+		    }
+		    // always use the value event handler after we've done our work.
+		    return Value::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Value::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void Enumeration::selectEncoderAction(int32_t offset) {
 	this->setValue(this->getValue() + offset);
 	int32_t numOptions = size();
@@ -54,8 +68,6 @@ void Enumeration::selectEncoderAction(int32_t offset) {
 			this->setValue(this->getValue() + numOptions);
 		}
 	}
-
-	Value::selectEncoderAction(offset);
 }
 
 void Enumeration::drawValue() {

@@ -7,11 +7,15 @@ namespace deluge::gui::menu_item {
 class Toggle : public Value<bool> {
 public:
 	using Value::Value;
+
+	ActionResult handleEvent(hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom) override;
-	void selectEncoderAction(int32_t offset) override;
 
 	virtual void drawValue();
 	void drawPixelsForOled();
+private:
+	void selectEncoderAction(int32_t offset);
 };
 
 /// the toggle pointer passed to this class must be valid for as long as the menu exists

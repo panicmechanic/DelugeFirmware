@@ -6,6 +6,21 @@
 
 namespace deluge::gui::menu_item {
 
+ActionResult Toggle::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    if (encoderEvent.offset != 0) {
+				    this->setValue(!this->getValue());
+			    }
+		    }
+		    return Value<bool>::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Value<bool>::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void Toggle::beginSession(MenuItem* navigatedBackwardFrom) {
 	Value::beginSession(navigatedBackwardFrom);
 	if (display->haveOLED()) {
@@ -14,14 +29,6 @@ void Toggle::beginSession(MenuItem* navigatedBackwardFrom) {
 	else {
 		drawValue();
 	}
-}
-
-void Toggle::selectEncoderAction(int32_t offset) {
-	const bool flip = offset & 0b1;
-	if (flip) {
-		this->setValue(!this->getValue());
-	}
-	Value::selectEncoderAction(offset);
 }
 
 void Toggle::drawValue() {

@@ -25,8 +25,9 @@ class MultiRange final : public Range {
 public:
 	using Range::Range;
 
+	ActionResult handleEvent(hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom) override;
-	void selectEncoderAction(int32_t offset) override;
 	MenuItem* selectButtonPress() override;
 	void noteOnToChangeRange(int32_t noteCode);
 	bool isRangeDependent() override { return true; }
@@ -43,6 +44,9 @@ protected:
 		return l10n::getView(l10n::String::STRING_FOR_NOTE_RANGE);
 	};
 	void drawPixelsForOled() override;
+
+private:
+	void selectEncoderAction(int32_t offset);
 };
 
 extern MultiRange multiRangeMenu;

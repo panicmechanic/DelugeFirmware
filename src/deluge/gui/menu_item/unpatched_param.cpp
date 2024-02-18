@@ -85,10 +85,14 @@ ParamSet* UnpatchedParam::getParamSet() {
 
 ActionResult UnpatchedParam::handleEvent(deluge::hid::Event const& event) {
 	auto handler = deluge::hid::EventHandler{
-	    [this](deluge::hid::ButtonEvent const& event) {
-		    return deluge::gui::menu_item::Param::buttonAction(event.which, event.on);
+	    [this, event](deluge::hid::ButtonEvent const& buttonEvent) {
+		    auto result = deluge::gui::menu_item::Param::buttonAction(buttonEvent.which, buttonEvent.on);
+		    if (result != ActionResult::NOT_DEALT_WITH) {
+			    return result;
+		    }
+		    return IntegerContinuous::handleEvent(event);
 	    },
-	    [](auto arg) { return ActionResult::NOT_DEALT_WITH; },
+	    [this, event](auto _) { return IntegerContinuous::handleEvent(event); },
 	};
 	return std::visit(handler, event);
 }

@@ -27,8 +27,10 @@ template <typename T = int32_t>
 class Value : public MenuItem {
 public:
 	using MenuItem::MenuItem;
+
+	ActionResult handleEvent(deluge::hid::Event const& event) override;
+
 	void beginSession(MenuItem* navigatedBackwardFrom) override;
-	void selectEncoderAction(int32_t offset) override;
 	void readValueAgain() override;
 	bool selectEncoderActionEditsInstrument() final { return true; }
 
@@ -68,17 +70,29 @@ void Value<T>::beginSession(MenuItem* navigatedBackwardFrom) {
 }
 
 template <typename T>
-void Value<T>::selectEncoderAction(int32_t offset) {
-	writeCurrentValue();
+ActionResult Value<T>::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent const& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->writeCurrentValue();
+			    // For MenuItems referring to an AutoParam (so UnpatchedParam and
+			    // PatchedParam), ideally we wouldn't want to render the display here,
+			    // because that'll happen soon anyway due to a setting of
+			    // TIMER_DISPLAY_AUTOMATION.
+			    if (display->haveOLED()) {
+				    renderUIsForOled();
+			    }
+			    else {
+				    drawValue(); // Probably not necessary either...
+			    }
 
-	// For MenuItems referring to an AutoParam (so UnpatchedParam and PatchedParam), ideally we wouldn't want to render
-	// the display here, because that'll happen soon anyway due to a setting of TIMER_DISPLAY_AUTOMATION.
-	if (display->haveOLED()) {
-		renderUIsForOled();
-	}
-	else {
-		drawValue(); // Probably not necessary either...
-	}
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return MenuItem::handleEvent(event);
+	    },
+	    [this, event](auto _) { return MenuItem::handleEvent(event); },
+	};
+	return std::visit(handler, event);
 }
 
 template <typename T>

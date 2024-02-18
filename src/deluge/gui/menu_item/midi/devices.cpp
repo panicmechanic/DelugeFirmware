@@ -30,6 +30,20 @@ namespace deluge::gui::menu_item::midi {
 
 static constexpr int32_t lowestDeviceNum = -4;
 
+ActionResult Devices::handleEvent(hid::Event const& event) {
+	hid::EventHandler handler{
+	    [this, event](hid::EncoderEvent& encoderEvent) {
+		    if (encoderEvent.name == hid::encoders::EncoderName::SELECT) {
+			    this->selectEncoderAction(encoderEvent.offset);
+			    return ActionResult::DEALT_WITH;
+		    }
+		    return Value<int32_t>::handleEvent(event);
+	    },
+	    [this, event](auto _) { return Value<int32_t>::handleEvent(event); },
+	};
+	return std::visit(handler, event);
+}
+
 void Devices::beginSession(MenuItem* navigatedBackwardFrom) {
 	bool found = false;
 	if (navigatedBackwardFrom != nullptr) {

@@ -760,7 +760,10 @@ void SoundEditor::selectEncoderAction(int8_t offset) {
 			hadNoteTails = currentSound->allowNoteTails(modelStack);
 		}
 
-		getCurrentMenuItem()->selectEncoderAction(offset);
+		getCurrentMenuItem()->handleEvent(hid::EncoderEvent{
+		    .name = hid::encoders::EncoderName::SELECT,
+		    .offset = offset,
+		});
 
 		if (currentSound) {
 			if (getCurrentMenuItem()->selectEncoderActionEditsInstrument()) {

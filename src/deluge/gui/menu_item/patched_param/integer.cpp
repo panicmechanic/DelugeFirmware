@@ -55,9 +55,13 @@ void Integer::writeCurrentValue() {
 ActionResult Integer::handleEvent(deluge::hid::Event const& event) {
 	deluge::hid::EventHandler handler{
 	    [this](deluge::hid::ButtonEvent const& event) {
-		    return deluge::gui::menu_item::PatchedParam::buttonAction(event.which, event.on);
+		    auto result = deluge::gui::menu_item::PatchedParam::buttonAction(event.which, event.on);
+		    if (result != ActionResult::NOT_DEALT_WITH) {
+			    return result;
+		    }
+		    return menu_item::IntegerContinuous::handleEvent(event);
 	    },
-	    [](auto arg) { return ActionResult::NOT_DEALT_WITH; },
+	    [this, event](auto _) { return menu_item::IntegerContinuous::handleEvent(event); },
 	};
 	return std::visit(handler, event);
 }
