@@ -10,6 +10,11 @@ FetchContent_Declare(argon
 )
 FetchContent_MakeAvailable(argon)
 
+FetchContent_Declare(ArduinoJSON
+  URL https://github.com/bblanchon/ArduinoJson/archive/refs/tags/v7.0.3.tar.gz
+)
+FetchContent_MakeAvailable(ArduinoJSON)
+
 FetchContent_Declare(doxygen-awesome-css
   URL https://github.com/jothepro/doxygen-awesome-css/archive/refs/tags/v2.2.1.tar.gz
   URL_HASH MD5=340d3a206794ac01a91791c2a513991f

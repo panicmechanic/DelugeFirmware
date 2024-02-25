@@ -171,6 +171,7 @@ add_executable(deluge)
 # Link external libraries
 target_link_libraries(deluge PUBLIC
     argon
+    ArduinoJson
 )
 
 option(MAINTAINER_MODE "Enables all warnings and errors" OFF)
