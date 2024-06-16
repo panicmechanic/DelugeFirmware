@@ -26,7 +26,7 @@ void OnProjectLoad (void) {
   Project.SetDevice ("R7S721020");
   Project.SetHostIF ("USB", "933001354");
   Project.SetTargetIF ("SWD");
-  Project.SetTIFSpeed ("4 MHz");
+  Project.SetTIFSpeed ("50 MHz");
   Project.SetJLinkScript ("C:/Data/prj/DelugeFirmware/Official/contrib/debug/Tracing.JLinkScript");
   Project.AddPathSubstitute ("C:/Data/Downloads", "$(ProjectDir)");
   Project.AddPathSubstitute ("c:/data/downloads", "$(ProjectDir)");
