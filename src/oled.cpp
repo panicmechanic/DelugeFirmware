@@ -238,6 +238,9 @@ void invertArea(int xMin, int width, int startY, int endY, uint8_t image[][OLED_
 
 void drawGraphicMultiLine(uint8_t const* graphic, int startX, int startY, int width, uint8_t* image, int height, int numBytesTall) {
 	int rowOnDisplay = startY >> 3;
+#if ALPHA_OR_BETA_VERSION
+	if (rowOnDisplay >= (OLED_MAIN_HEIGHT_PIXELS >> 3)) numericDriver.freezeWithError("E452");
+#endif
 	int yOffset = startY & 7;
 	int rowOnGraphic = 0;
 
@@ -823,6 +826,7 @@ void popupText(char const* text, bool persistent) {
 	if (textPixelY < 0) textPixelY = 0;
 
 	for (int l = 0; l < textLineBreakdown.numLines; l++) {
+		if (textPixelY >= OLED_MAIN_HEIGHT_PIXELS) continue;
 		int textPixelX = (OLED_MAIN_WIDTH_PIXELS - (TEXT_SPACING_X * textLineBreakdown.lineLengths[l])) >> 1;
 		drawStringFixedLength(textLineBreakdown.lines[l], textLineBreakdown.lineLengths[l], textPixelX, textPixelY, oledMainPopupImage[0], OLED_MAIN_WIDTH_PIXELS, TEXT_SPACING_X, TEXT_SPACING_Y);
 		textPixelY += TEXT_SPACING_Y;
