@@ -10,3 +10,5 @@ FetchContent_Declare(argon
 )
 FetchContent_MakeAvailable(argon)
 
+add_library(tinyusb_config INTERFACE)
+target_include_directories(tinyusb_config INTERFACE tinyusb)
