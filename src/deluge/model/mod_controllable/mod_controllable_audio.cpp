@@ -84,8 +84,6 @@ ModControllableAudio::ModControllableAudio() {
 }
 
 ModControllableAudio::~ModControllableAudio() {
-	// delay.discardBuffers(); // No! The DelayBuffers will themselves destruct and do this
-
 	// Free the mod fx memory
 	if (modFXBuffer) {
 		delugeDealloc(modFXBuffer);
