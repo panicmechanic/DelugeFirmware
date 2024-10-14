@@ -1,14 +1,14 @@
 #pragma once
 
 #include "dsp/stereo_sample.h"
-#include "interpolated_value.hpp"
-#include "stereo_delay_line.hpp"
+#include "dsp/util/interpolated_value.hpp"
+#include "dsp/util/stereo_delay_line.hpp"
 #include "util/unit_convernsions.h"
 #include <cstddef>
 #include <span>
 
 namespace deluge::dsp::delay::loss {
-constexpr size_t max_size = size_t(1 << 8) - 1;
+constexpr size_t max_size = size_t(1 << 18) - 1;
 class Azimuth {
 	static constexpr size_t num_channels = 2;
 
