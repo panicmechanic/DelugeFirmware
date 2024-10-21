@@ -61,7 +61,7 @@ struct StereoSample {
 	q31_t r = 0;
 };
 
-struct StereoSampleFloat {
+struct StereoFloatSample {
 	float l = 0.f;
 	float r = 0.f;
 };

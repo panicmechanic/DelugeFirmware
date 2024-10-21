@@ -14,21 +14,22 @@ class Azimuth {
 
 public:
 	Azimuth() = default;
-	void Init(float sample_rate) {
+
+	void init(float sample_rate) {
 		sample_rate_ = sample_rate;
 		delay_.Init();
 		delay_sample_smoothed_[0].Reset(sample_rate, 0.05);
 		delay_sample_smoothed_[1].Reset(sample_rate, 0.05);
 	}
 
-	void ProcessBlock(float angle_deg, float tape_speed_ips, float tape_width, std::span<StereoSample> in_out) {
+	void processBlock(float angle_deg, float tape_speed_ips, float tape_width, std::span<StereoFloatSample> in_out) {
 		if (angle_deg_ != angle_deg || tape_speed_ips_ != tape_speed_ips || tape_width_ != tape_width) {
 			angle_deg_ = angle_deg;
 			tape_speed_ips_ = tape_speed_ips;
 			tape_width_ = tape_width;
-			RecalculateDelay();
+			recalculateDelay();
 		}
-		for (StereoSample& sample : in_out) {
+		for (StereoFloatSample& sample : in_out) {
 			auto delay0 = (delay_sample_smoothed_[0].is_interpolating()) ? delay_sample_smoothed_[0].Next() : 0.f;
 			auto delay1 = (delay_sample_smoothed_[1].is_interpolating()) ? delay_sample_smoothed_[1].Next() : 0.f;
 			delay_.Write(sample);
@@ -37,8 +38,8 @@ public:
 	}
 
 private:
-	void RecalculateDelay() {
-		const size_t delay_idx = static_cast<size_t>(angle_deg_ < 0.0f);
+	void recalculateDelay() {
+		const auto delay_idx = static_cast<size_t>(angle_deg_ < 0.0f);
 		const float tape_speed = deluge::util::InchesToMeters(tape_speed_ips_);
 		const float azimuth_angle = deluge::util::DegreeToRad(std::abs(angle_deg_));
 
@@ -49,7 +50,7 @@ private:
 		delay_sample_smoothed_[1 - delay_idx].set_target(0.0f);
 	}
 
-	util::StereoDelayLine<max_size> delay_;
+	util::StereoFloatDelayLine<max_size> delay_;
 	util::InterpolatedValue<float> delay_sample_smoothed_[2];
 	float angle_deg_;
 	float tape_speed_ips_;
