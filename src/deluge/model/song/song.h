@@ -396,6 +396,8 @@ public:
 	// Reverb params to be stored here between loading and song being made the active one
 	dsp::Reverb::Model model;
 	float reverbRoomSize;
+	float reverbHPF;
+	float reverbLPF;
 	float reverbDamp;
 	float reverbWidth;
 	int32_t reverbPan;
@@ -433,8 +435,13 @@ public:
 	// Tempo automation
 	void clearTempoAutomation();
 	void updateBPMFromAutomation();
+
 	float calculateBPM() {
 		float timePerTimerTick = getTimePerTimerTickFloat();
+		return calculateBPM(timePerTimerTick);
+	}
+	float calculateBPM(float timePerTimerTick) {
+
 		if (insideWorldTickMagnitude > 0) {
 			timePerTimerTick *= ((uint32_t)1 << (insideWorldTickMagnitude));
 		}

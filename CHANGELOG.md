@@ -6,6 +6,7 @@
 
 ### Sound Engine
 - Added a Warbler fx and a warble LFO to synths/kits/kit rows/song/audio clips
+- Added LPF to Mutable Instruments Reverb
 
 ### User Interface
 
@@ -50,12 +51,14 @@ at velocity 0 it would look the same as its tail (but you can't have 0 velocity)
 - Added ability to automate all Monophonic (Channel) Expression parameters (X - Pitch Bend, Y - Mod Wheel, Z - Channel Pressure / Aftertouch) in Synth / Kit Row (with Affect Entire Off) / MIDI / CV
 
 ##### Note / Note Row Probability, Iterance, Fill
-- Enhanced existing note probability, iteration and fill function functionality by enabling you to use each type independently. This means that you can now apply probability to iteration and fill and you can also apply iteration to fill. 
-  - Holding a note / note row and turning the select encoder now only changes probability.
-  - To edit note / note row iteration and fill settings you need to access the new note and note row editor menu's.
+- Enhanced existing note probability, iteration and fill function functionality by enabling you to use each type independently. This means that you can now apply probability to iteration and fill and you can also apply iteration to fill.
+  - To edit probability, hold a note / audition pad and turn the select encoder to the left to display current probability value / set new probability value.
+  - To edit iterance, hold a note / audition pad and turn the select encoder to the right to display current iterance value / set new iterance value.
+  - To edit fill, you need to access the new note and note row editor menu's.
 - Added new note and note row editor menu's to edit note and note row parameters.
   - Hold a note and press the select encoder to enter the note editor menu. While in the note editor menu, the selected note will blink. You can select other notes by pressing the notes on the grid.
   - Hold a note row audition pad and press the select encoder to enter the note row editor menu. While in the note row editor menu, the selected note row's audition pad will blink. You can select other note row's by pressing the note row audition pad or by scrolling with the vertical encoder.
+  - The iteration is now also customizable with custom iteration steps. If you scroll the iteration parameter all the way to the right, you will see the `CUSTOM` option. If you click the `SELECT` encoder, a new menu will appear to select the `DIVISOR` parameter (you can select from 1 to 8), and also as many `ITERATION #` toggles as `DIVISOR` is set, to allow you to activate or deactivate each iteration step.
   
 ##### Recording
 - Enabled seamless linear recording of drone notes using audition pads or external midi.
@@ -77,6 +80,8 @@ at velocity 0 it would look the same as its tail (but you can't have 0 velocity)
 - Added new `MIDI LEARN` menu to the `SONG` menu. In `Song Grid View` this menu enables you to learn `Clip/Section Launch`. In `Song Row View` this menu enables you to learn the `Clip/Section Launch` and `Instrument`.
   - While in this menu, you just need to `hold a clip / section` and send midi to learn that clip / section. If you press the `clip / section` again you will unlearn it.
 - Added ability to `Midi Learn Instruments` and `Select the Audio Source for Audio Clips` in `Song Grid View Green Mode` by moving `Midi Learn Clip/Section Launch` actions to the `MIDI LEARN` menu mentioned above.
+- Fixed unexpected behaviour for `Synth` and `Kit` clips that would cause `MIDI LEARNED PARAMS` to get lost when changing presets for Synth / Kits. 
+  - Note: for `Kit` clips it will migrate midi learn for `Kit Affect Entire` params only.
 
 ## c1.2.0 Chopin
 
@@ -95,6 +100,9 @@ at velocity 0 it would look the same as its tail (but you can't have 0 velocity)
 
 #### <ins>FM Synth Filters</ins>
 - Added filters in FM synth mode. They're set to OFF by default, enable by changing them to any other mode using the menu or db/oct shortcut.
+
+#### <ins>Reverb</ins>
+- Fixed bug with Reverb HPF not saving to / loading from the Song
 
 ### MIDI
 
