@@ -19,6 +19,7 @@
 #include <cstdint>
 // signed 31 fractional bits (e.g. one would be 1<<31 but can't be represented)
 using q31_t = int32_t;
+using q63_t = int64_t;
 
 constexpr q31_t ONE_Q31{2147483647};
 constexpr float ONE_Q31f{2147483647.0f};

@@ -7,10 +7,10 @@
 #include <span>
 #include "dsp/util/iir_coefficients.hpp"
 
-namespace deluge::dsp::blocks {
-class StereoBiquad {
+namespace deluge::dsp::blocks::filters {
+class BiquadDF2TStereo {
 public:
-	using Coefficients = deluge::dsp::util::iir::Coefficients;
+	using Coefficients = deluge::dsp::util::iir::Coefficients<float>;
 	using State = std::array<float, 4>;
 
 	struct Config {
@@ -19,7 +19,7 @@ public:
 		std::span<Coefficients> coefficients;
 	};
 
-	StereoBiquad(Config c) : config_{c} {}
+	BiquadDF2TStereo(Config c) : config_{c} {}
 
 	// StereoBiquad
 	void processStereoBlock(const std::span<StereoFloatSample> in, std::span<StereoFloatSample> out) {
