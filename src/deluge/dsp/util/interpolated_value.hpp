@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cmath>
 #include <cstddef>
 
@@ -39,6 +40,15 @@ public:
 			}
 		}
 		return value_;
+	}
+
+	template <size_t n>
+	inline std::array<float, n> NextN() {
+		std::array<float, n> out;
+		for (size_t i = 0; i < n; ++i) {
+			out[i] = (value_ += increment_);
+		}
+		return out;
 	}
 
 	inline void Reset(float sample_rate, float ramp_length_in_seconds) {

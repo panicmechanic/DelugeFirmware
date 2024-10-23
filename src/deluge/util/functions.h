@@ -211,14 +211,11 @@ int32_t cableToLinearParamShortcut(int32_t sourceValue);
 int32_t cableToExpParamShortcut(int32_t sourceValue);
 
 class Sound;
-class StereoSample;
 int32_t getFinalParameterValueVolume(int32_t paramNeutralValue, int32_t patchedValue);
 int32_t getFinalParameterValueLinear(int32_t paramNeutralValue, int32_t patchedValue);
 int32_t getFinalParameterValueHybrid(int32_t paramNeutralValue, int32_t patchedValue);
 int32_t getFinalParameterValueExp(int32_t paramNeutralValue, int32_t patchedValue);
 int32_t getFinalParameterValueExpWithDumbEnvelopeHack(int32_t paramNeutralValue, int32_t patchedValue, int32_t p);
-
-void addAudio(StereoSample* inputBuffer, StereoSample* outputBuffer, int32_t numSamples);
 
 char const* getSourceDisplayNameForOLED(PatchSource s);
 

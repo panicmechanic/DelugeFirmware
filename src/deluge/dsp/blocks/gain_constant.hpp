@@ -2,6 +2,7 @@
 #include "argon.hpp"
 #include "dsp/stereo_sample.h"
 #include <span>
+
 namespace deluge::dsp::blocks {
 struct GainConstant {
 	GainConstant(float amount) : amount_{amount} {}

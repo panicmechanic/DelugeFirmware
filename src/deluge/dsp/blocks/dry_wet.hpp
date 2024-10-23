@@ -5,7 +5,7 @@
 #include <span>
 namespace deluge::dsp::blocks {
 struct DryWet {
-	float ratio; // Dry : Wet
+	float ratio; // Dry : Wet (0, 1]
 
 	void processBlock(const std::span<float> dry, const std::span<float> wet, std::span<float> out) const {
 		constexpr size_t lanes = argon::Neon128<float>::lanes;
@@ -16,7 +16,7 @@ struct DryWet {
 		size_t vec_size = size - (size % lanes);
 
 		auto wet_multiplicand = ratio;
-		auto dry_multiplicand = 1.f / ratio;
+		auto dry_multiplicand = 1.f - ratio;
 
 		for (size_t i = 0; i < vec_size; i += lanes) {
 			argon::Neon128<float> dry_vec{&dry[i]};                                        // Load mono dry samples
@@ -41,7 +41,7 @@ struct DryWet {
 		size_t vec_size = size - (size % lanes);
 
 		auto wet_multiplicand = ratio;
-		auto dry_multiplicand = 1.f / ratio;
+		auto dry_multiplicand = 1.f - ratio;
 
 		for (size_t i = 0; i < vec_size; i += lanes) {
 			argon::Neon128<float> dry_vec{&dry[i].l};                                      // Load stereo dry samples

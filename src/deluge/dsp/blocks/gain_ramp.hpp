@@ -2,7 +2,6 @@
 
 #include "dsp/stereo_sample.h"
 #include <argon.hpp>
-#include <arm_neon.h>
 
 namespace deluge::dsp::blocks {
 struct GainRamp {
@@ -53,7 +52,7 @@ struct GainRamp {
 
 	void processStereoBlock(std::span<StereoFloatSample> in, std::span<StereoFloatSample> out) {
 		// Must be greater than 2 to be accelerated (and if less than two: why run at all?)
-		assert(in.size() > 2);
+		// assert(in.size() > 2);
 
 		constexpr size_t num_parallel = argon::Neon128<float>::lanes / 2;
 		const size_t size = in.size();

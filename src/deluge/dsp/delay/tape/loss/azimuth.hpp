@@ -7,7 +7,7 @@
 #include <cstddef>
 #include <span>
 
-namespace deluge::dsp::delay::loss {
+namespace deluge::dsp::delay::tape::loss {
 constexpr size_t max_size = size_t(1 << 18) - 1;
 class Azimuth {
 	static constexpr size_t num_channels = 2;

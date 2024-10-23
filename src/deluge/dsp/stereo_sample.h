@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "util/fixedpoint.h"
 #include "util/functions.h"
 
 struct StereoSample {
@@ -59,9 +60,13 @@ struct StereoSample {
 
 	q31_t l = 0;
 	q31_t r = 0;
+
+	using base_type = q31_t;
 };
 
 struct StereoFloatSample {
 	float l = 0.f;
 	float r = 0.f;
+
+	using base_type = float;
 };

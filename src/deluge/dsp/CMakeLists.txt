@@ -6,7 +6,9 @@ file (GLOB_RECURSE deluge_dsp_SOURCES
   ${CMAKE_CURRENT_LIST_DIR}/*.s
 )
 
-add_library(deluge_dsp STATIC ${deluge_dsp_SOURCES})
+file(GLOB_RECURSE deluge_dsp_MODULES *.cppm)
+
+add_library(deluge_dsp STATIC ${deluge_dsp_SOURCES} ${deluge_dsp_MODULES})
 
 target_include_directories(deluge_dsp PRIVATE
   ${CMAKE_CURRENT_LIST_DIR}/..
@@ -24,8 +26,11 @@ set_target_properties(deluge_dsp
         CXX_STANDARD ${DELUGE_CXX_STANDARD}
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS ON
+        #CXX_SCAN_FOR_MODULES ON
         UNITY_BUILD true
 )
+
+target_compile_features(deluge_dsp PRIVATE cxx_std_23)
 
 target_link_libraries(deluge_dsp PRIVATE
     NE10

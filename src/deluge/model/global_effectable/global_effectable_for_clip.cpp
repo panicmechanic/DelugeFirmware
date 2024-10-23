@@ -17,20 +17,21 @@
 
 #include "model/global_effectable/global_effectable_for_clip.h"
 #include "definitions_cxx.hpp"
+#include "dsp/blocks/sum.hpp"
+#include "dsp/stereo_sample.h"
 #include "gui/l10n/l10n.h"
 #include "gui/views/view.h"
-#include "model/action/action.h"
-#include "model/action/action_logger.h"
-#include "processing/engines/audio_engine.h"
-#include <string.h>
-// #include <algorithm>
 #include "hid/buttons.h"
 #include "memory/general_memory_allocator.h"
+#include "model/action/action.h"
+#include "model/action/action_logger.h"
 #include "model/clip/clip.h"
 #include "model/instrument/kit.h"
 #include "model/song/song.h"
 #include "modulation/params/param_set.h"
 #include "playback/playback_handler.h"
+#include "processing/engines/audio_engine.h"
+#include <string.h>
 
 extern "C" {
 #include "drivers/ssi/ssi.h"
@@ -153,7 +154,8 @@ GlobalEffectableForClip::GlobalEffectableForClip() {
 		// we need to double it because for reasons I don't understand audio clips max volume is half the sample volume
 		recorder->feedAudio((int32_t*)globalEffectableBuffer, numSamples, true, 2);
 	}
-	addAudio(globalEffectableBuffer, outputBuffer, numSamples);
+	dsp::blocks::Sum<StereoSample>::processStereoBlock({globalEffectableBuffer, numSamples}, {outputBuffer, numSamples},
+	                                                   {outputBuffer, numSamples});
 
 	postReverbVolumeLastTime = postReverbVolume;
 

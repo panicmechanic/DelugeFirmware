@@ -17,6 +17,7 @@
 
 #include "processing/sound/sound.h"
 #include "definitions_cxx.hpp"
+#include "dsp/blocks/sum.hpp"
 #include "dsp/dx/engine.h"
 #include "gui/l10n/l10n.h"
 #include "gui/ui/root_ui.h"
@@ -2442,7 +2443,8 @@ void Sound::render(ModelStackWithThreeMainThings* modelStack, StereoSample* outp
 		// we need to double it because for reasons I don't understand audio clips max volume is half the sample volume
 		recorder->feedAudio(soundBuffer, numSamples, true, 2);
 	}
-	addAudio((StereoSample*)soundBuffer, outputBuffer, numSamples);
+	dsp::blocks::Sum<StereoSample>::processStereoBlock({(StereoSample*)soundBuffer, numSamples},
+	                                                   {outputBuffer, numSamples}, {outputBuffer, numSamples});
 
 	postReverbVolumeLastTime = postReverbVolume;
 
@@ -3481,7 +3483,7 @@ gotError:
 					memcpy(destinationRange, tempRange, source->ranges.elementSize);
 					reader.match('}');          // exit value object
 					reader.exitTag(NULL, true); // exit box.
-				}                               // was a sampleRange or wavetableRange
+				} // was a sampleRange or wavetableRange
 				else {
 					reader.exitTag();
 				}
