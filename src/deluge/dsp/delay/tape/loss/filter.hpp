@@ -1,15 +1,11 @@
-//module;
 
 #pragma once
 #include "NE10_types.h"
 #include "azimuth.hpp"
 #include "definitions_cxx.hpp"
-#include "dsp/blocks/filters/biquad_float.hpp"
-#include "dsp/util/iir_coefficients.hpp"
+#include "dsp/blocks/filters/iir/biquad_float.hpp"
+#include "dsp/blocks/filters/iir/coefficients.hpp"
 #include "util/unit_convernsions.h"
-
-//export module deluge.dsp.delay.tape.loss.filter;
-//import deluge.dsp.delay.tape.loss.azimuth;
 
 namespace deluge::dsp::delay::tape::loss {
 class LossFilter {
@@ -22,12 +18,13 @@ class LossFilter {
 	};
 
 private:
-	using Coefficients = util::iir::Coefficients<float>;
-	using Biquad = blocks::filters::BiquadDF2TStereo;
+	using Biquad = blocks::filters::iir::BiquadDF2TStereo<2>;
+	using Coefficients = blocks::filters::iir::Coefficients<float>;
+
 	static Coefficients calcHeadBumpFilter(float speedIps, float gapMeters, float fs) {
 		auto bumpFreq = deluge::util::InchesToMeters(speedIps) / (gapMeters * 500.0f);
 		auto gain = std::max(1.5f * (1000.0f - std::abs(bumpFreq - 100.0f)) / 1000.0f, 1.0f);
-		return util::iir::peakEQ(fs, bumpFreq, 2.0f, gain);
+		return Coefficients::peakEQ(fs, bumpFreq, 2.0f, gain);
 	}
 
 	Coefficients calcCoefs() {
@@ -35,7 +32,8 @@ private:
 		auto& H = Hcoefs;
 		for (int k = 0; k < order / 2; k++) {
 			const auto freq = (float)k * binWidth;
-			const auto waveNumber = 2 * std::numbers::pi_v<float> * std::max(freq, 20.0f) / deluge::util::InchesToMeters(params_->speed);
+			const auto waveNumber =
+			    2 * std::numbers::pi_v<float> * std::max(freq, 20.0f) / deluge::util::InchesToMeters(params_->speed);
 			const auto thickTimesK = waveNumber * (params_->thickness * (float)1.0e-6);
 			const auto kGapOverTwo = waveNumber * (params_->gap * (float)1.0e-6) / 2.0f;
 
@@ -61,9 +59,7 @@ private:
 	}
 
 	std::array<ne10_fir_instance_f32_t, 2> filters;
-	std::array<Biquad::State, 2> biquad_state_;
-	std::array<Biquad::Coefficients, 2> biquad_coeff_;
-	Biquad bump_filter_{{2, biquad_state_, biquad_coeff_}};
+	Biquad bump_filter_;
 
 	int activeFilter = 0;
 	int fadeCount = 0;
@@ -82,7 +78,6 @@ private:
 	static constexpr float fs = kSampleRate;
 	static constexpr float fsFactor = 1.0f;
 	static constexpr float binWidth = fs / order;
-
 
 	std::array<float, order> currentCoefs;
 	std::array<float, order> Hcoefs;

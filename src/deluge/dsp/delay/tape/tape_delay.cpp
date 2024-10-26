@@ -2,6 +2,7 @@
 #include "dsp/blocks/gain_ramp.hpp"
 #include "dsp/blocks/dry_wet.hpp"
 #include "dsp/processors/gain.hpp"
-#include "dsp/blocks/filters/biquad_float.hpp"
+#include "dsp/blocks/filters/iir/biquad_float.hpp"
+#include "dsp/blocks/filters/iir/biquad_fixed.hpp"
 #include "loss/filter.hpp"
 #include "dsp/processors/pan.hpp"
