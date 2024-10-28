@@ -24,7 +24,7 @@ private:
 	static Coefficients calcHeadBumpFilter(float speedIps, float gapMeters, float fs) {
 		auto bumpFreq = deluge::util::InchesToMeters(speedIps) / (gapMeters * 500.0f);
 		auto gain = std::max(1.5f * (1000.0f - std::abs(bumpFreq - 100.0f)) / 1000.0f, 1.0f);
-		return Coefficients::peakEQ(fs, bumpFreq, 2.0f, gain);
+		return blocks::filters::iir::peakEQ(fs, bumpFreq, 2.0f, gain);
 	}
 
 	Coefficients calcCoefs() {
@@ -55,7 +55,7 @@ private:
 		}
 
 		// compute head bump filters
-		return calcHeadBumpFilter(params_->speed, params_->gap * (float)1.0e-6, (double)fs);
+		return calcHeadBumpFilter(params_->speed, params_->gap * (float)1.0e-6, fs);
 	}
 
 	std::array<ne10_fir_instance_f32_t, 2> filters;

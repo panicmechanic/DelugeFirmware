@@ -6,3 +6,4 @@
 #include "dsp/blocks/filters/iir/biquad_fixed.hpp"
 #include "loss/filter.hpp"
 #include "dsp/processors/pan.hpp"
+#include "dsp/blocks/filters/iir/linkwitz_riley.hpp"

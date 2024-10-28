@@ -124,7 +124,7 @@ public:
 
 				state = Neon128<float>::Load(&scratch[2]); // load {s2a, s2b, 0, 0}
 				state = state.MultiplyAdd(y_quad, a_coeffs);
-				state = state.MultiplyAdd(input_quad, a_coeffs);
+				state = state.MultiplyAdd(input_quad, b_coeffs);
 				state.Store(scratch.data());
 			}
 
