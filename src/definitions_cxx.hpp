@@ -978,6 +978,8 @@ constexpr int32_t kBitDepth = 24;
 // The maximum value a (24-bit) sample can hold
 constexpr int32_t kMaxSampleValue = 1 << kBitDepth; // 2 ** kBitDepth
 
+constexpr size_t kMaxBlockSize = 128;
+
 /// Length of press that delineates a "short" press. Set to half a second (in units of samples, to work with
 /// AudioEngine::audioSampleTimer)
 constexpr uint32_t kShortPressTime = kSampleRate / 2;

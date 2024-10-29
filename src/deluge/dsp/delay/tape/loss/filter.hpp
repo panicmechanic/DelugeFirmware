@@ -5,20 +5,23 @@
 #include "definitions_cxx.hpp"
 #include "dsp/blocks/filters/iir/biquad_float.hpp"
 #include "dsp/blocks/filters/iir/coefficients.hpp"
+#include "dsp/stereo_sample.h"
 #include "util/unit_convernsions.h"
 
 namespace deluge::dsp::delay::tape::loss {
 class LossFilter {
 	struct Params {
-		float speed;
-		float spacing;
-		float thickness;
-		float gap;
-		float azimuth;
+		float speed = 0.5f;
+		float spacing = 0.5f;
+		float thickness = 0.5f;
+		float gap = 0.5f;
+		float azimuth = 0.0f;
+
+		bool operator==(const Params&) const = default;
 	};
 
 private:
-	using Biquad = blocks::filters::iir::BiquadDF2TStereo<2>;
+	using BiquadStereo = blocks::filters::iir::BiquadDF2TStereo<2>;
 	using Coefficients = blocks::filters::iir::Coefficients<float>;
 
 	static Coefficients calcHeadBumpFilter(float speedIps, float gapMeters, float fs) {
@@ -58,8 +61,15 @@ private:
 		return calcHeadBumpFilter(params_->speed, params_->gap * (float)1.0e-6, fs);
 	}
 
-	std::array<ne10_fir_instance_f32_t, 2> filters;
-	Biquad bump_filter_;
+	void processBlock(const std::span<StereoFloatSample> input, std::span<StereoFloatSample> output) {
+		if (*params_ != prevParams) {
+			auto coefs = calcCoefs();
+		}
+
+	}
+
+	std::array<ne10_fir_instance_f32_t, 2> filters; // 2 for stereo
+	BiquadStereo bump_filter_;
 
 	int activeFilter = 0;
 	int fadeCount = 0;
@@ -68,10 +78,7 @@ private:
 
 	Params* params_;
 
-	float prevSpeed = 0.5f;
-	float prevSpacing = 0.5f;
-	float prevThickness = 0.5f;
-	float prevGap = 0.5f;
+	Params prevParams;
 
 	static constexpr size_t order = 64;
 

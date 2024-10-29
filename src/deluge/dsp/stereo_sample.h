@@ -22,6 +22,8 @@
 
 #include "util/fixedpoint.h"
 #include "util/functions.h"
+#include <span>
+#include <argon.hpp>
 
 struct StereoSample {
 	inline void addMono(q31_t sampleValue) {
@@ -70,3 +72,34 @@ struct StereoFloatSample {
 
 	using base_type = float;
 };
+
+void stereo_deinterleave(const std::span<StereoFloatSample> stereo, std::span<float> left, std::span<float> right) {
+	using namespace argon;
+	size_t block_end = stereo.size() & 0x03;
+	size_t i;
+	for (i = 0; i < block_end; i += 4) {
+		auto [l, r] = Neon128<float>::Load2(&stereo[i].l);
+		l.Store(&left[i]);
+		r.Store(&right[i]);
+	}
+	for (; i < stereo.size(); ++i) {
+		left[i] = stereo[i].l;
+		right[i] = stereo[i].r;
+	}
+}
+
+
+void stereo_interleave(const std::span<float> left, const std::span<float> right, std::span<StereoFloatSample> stereo) {
+	using namespace argon;
+	size_t block_end = stereo.size() & 0x03;
+	size_t i;
+	for (i = 0; i < block_end; i += 4) {
+		auto l = Neon128<float>::Load(&left[i]);
+		auto r = Neon128<float>::Load(&right[i]);
+		Neon128<float>::Store2({l, r}, &stereo[i].l)
+	}
+	for (; i < stereo.size(); ++i) {
+		stereo[i].l = left[i];
+		stereo[i].r = right[i];
+	}
+}
