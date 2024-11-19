@@ -1125,11 +1125,9 @@ startRenderingACycle:
 				uint32_t resetterPhase = resetterPhaseThisCycle;
 				int32_t numSamplesThisOscSyncSession = numSamplesThisCycle;
 				renderOscSync(
-				    [&](int32_t const* const bufferEndThisSyncRender, uint32_t phaseTemp,
-				        int32_t* __restrict__ writePos) {
-					    doRenderingLoop(bufferStartThisSync, bufferEndThisSyncRender, firstCycleNumber, bandHere,
-					                    phaseTemp, phaseIncrement, crossCycleStrength2, crossCycleStrength2Increment,
-					                    kernel);
+				    [&](int32_t const* const bufferEndThisSyncRender, uint32_t phase, int32_t* __restrict__ writePos) {
+					    doRenderingLoop(bufferStartThisSync, bufferEndThisSyncRender, firstCycleNumber, bandHere, phase,
+					                    phaseIncrement, crossCycleStrength2, crossCycleStrength2Increment, kernel);
 				    },
 				    [&](uint32_t samplesIncludingNextCrossoverSample) {
 					    crossCycleStrength2 += crossCycleStrength2Increment * (samplesIncludingNextCrossoverSample - 1);
@@ -1163,8 +1161,8 @@ doneRenderingACycle:
 			uint32_t resetterPhase = resetterPhaseThisCycle;
 			int32_t numSamplesThisOscSyncSession = numSamples;
 			renderOscSync(
-			    [&](int32_t const* const bufferEndThisSyncRender, uint32_t phaseTemp, int32_t* __restrict__ writePos) {
-				    doRenderingLoopSingleCycle(bufferStartThisSync, bufferEndThisSyncRender, bandHere, phaseTemp,
+			    [&](int32_t const* const bufferEndThisSyncRender, uint32_t phase, int32_t* __restrict__ writePos) {
+				    doRenderingLoopSingleCycle(bufferStartThisSync, bufferEndThisSyncRender, bandHere, phase,
 				                               phaseIncrement, kernel);
 			    },
 			    [](uint32_t) {}, phase, phaseIncrement, resetterPhase, resetterPhaseIncrement,
