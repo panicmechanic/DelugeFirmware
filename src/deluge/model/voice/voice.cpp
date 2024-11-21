@@ -1687,10 +1687,9 @@ void Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* 
 	*phase += phaseIncrement * buffer.size();
 
 	if (feedbackAmount) {
-		int32_t amplitudeNow = amplitude;
 		int32_t feedbackValue = *lastFeedbackValue;
 		for (q31_t& sample : buffer) {
-			amplitudeNow += amplitudeIncrement;
+			amplitude += amplitudeIncrement;
 			int32_t feedback = multiply_32x32_rshift32(feedbackValue, feedbackAmount);
 
 			// We do hard clipping of the feedback amount. Doing tanH causes aliasing - even if we used the anti-aliased
@@ -1699,18 +1698,13 @@ void Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* 
 
 			feedbackValue = dsp::SineOsc::doFMNew(phaseNow += phaseIncrement, feedback);
 
-			if (add) {
-				sample = multiply_accumulate_32x32_rshift32_rounded(sample, feedbackValue, amplitudeNow);
-			}
-			else {
-				sample = multiply_32x32_rshift32(feedbackValue, amplitudeNow);
-			}
+			sample = (add) ? multiply_accumulate_32x32_rshift32_rounded(sample, feedbackValue, amplitude)
+			               : multiply_32x32_rshift32(feedbackValue, amplitude);
 		}
 
 		*lastFeedbackValue = feedbackValue;
 	}
 	else {
-		int32_t amplitudeNow = amplitude;
 		if (amplitudeIncrement) {
 			for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
 				Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
@@ -1718,22 +1712,16 @@ void Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* 
 				Argon<q31_t> amplitudeVector = amplitudeNow + ((amplitudeIncrement * int32x4_t{1, 2, 3, 4}) >> 1);
 				amplitudeNow += (amplitudeIncrement * 4);
 
-				Argon<q31_t> resultValueVector = vqdmulhq_s32(amplitudeVector, sineValueVector);
-
-				if (add) {
-					sample = vaddq_s32(sample, resultValueVector);
-				}
-				else {
-					sample = resultValueVector;
-				}
+				Argon<q31_t> new_sample = amplitudeVector.MultiplyFixedPoint(sineValueVector);
+				sample = (add) ? sample + new_sample : sample
 			}
 		}
 
 		else {
 			for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
 				Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
-				Argon<q31_t> newSample = vqrdmulhq_n_s32(sineValueVector, amplitudeNow >> 1);
-				sample = (add) ? sample + newSample : newSample;
+				Argon<q31_t> new_sample = sineValueVector.MultiplyRoundFixedPoint(amplitudeNow >> 1);
+				sample = (add) ? sample + new_sample : newSample;
 			}
 		}
 	}
