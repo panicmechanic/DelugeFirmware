@@ -46,6 +46,7 @@
 #include "storage/multi_range/multisample_range.h"
 #include "storage/storage_manager.h"
 #include "storage/wave_table/wave_table.h"
+#include "util/fixedpoint.h"
 #include "util/functions.h"
 #include "util/lookuptables/lookuptables.h"
 #include "util/misc.h"
@@ -703,7 +704,7 @@ uint32_t Voice::getLocalLFOPhaseIncrement() {
 // Before calling this, you must set the filterSetConfig's doLPF and doHPF to default values
 
 // Returns false if became inactive and needs unassigning
-[[gnu::hot]] bool Voice::render(ModelStackWithVoice* modelStack, int32_t* soundBuffer, int32_t numSamples,
+[[gnu::hot]] bool Voice::render(ModelStackWithVoice* modelStack, int32_t* soundBuffer, size_t numSamples,
                                 bool soundRenderingInStereo, bool applyingPanAtVoiceLevel, uint32_t sourcesChanged,
                                 bool doLPF, bool doHPF, int32_t externalPitchAdjust) {
 
@@ -1399,7 +1400,7 @@ cantBeDoingOscSyncForFirstOsc:
 					}
 
 					// Render mod1
-					renderSineWaveWithFeedback(spareRenderingBuffer[2], numSamples, &unisonParts[u].modulatorPhase[1],
+					renderSineWaveWithFeedback({spareRenderingBuffer[2], numSamples}, &unisonParts[u].modulatorPhase[1],
 					                           modulatorAmplitudeLastTime[1], phaseIncrementModulator[1],
 					                           paramFinalValues[params::LOCAL_MODULATOR_1_FEEDBACK],
 					                           &unisonParts[u].modulatorFeedback[1], false,
@@ -1418,7 +1419,7 @@ cantBeDoingOscSyncForFirstOsc:
 					// Otherwise, so long as modulator0 is in fact active, render it separately and add it
 					else if (modulatorsActive[0]) {
 						renderSineWaveWithFeedback(
-						    spareRenderingBuffer[2], numSamples, &unisonParts[u].modulatorPhase[0],
+						    {spareRenderingBuffer[2], numSamples}, &unisonParts[u].modulatorPhase[0],
 						    modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
 						    paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK], &unisonParts[u].modulatorFeedback[0],
 						    true, modulatorAmplitudeIncrements[0]);
@@ -1427,7 +1428,7 @@ cantBeDoingOscSyncForFirstOsc:
 				else {
 					if (modulatorsActive[0]) {
 						renderSineWaveWithFeedback(
-						    spareRenderingBuffer[2], numSamples, &unisonParts[u].modulatorPhase[0],
+						    {spareRenderingBuffer[2], numSamples}, &unisonParts[u].modulatorPhase[0],
 						    modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
 						    paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK], &unisonParts[u].modulatorFeedback[0],
 						    false, modulatorAmplitudeIncrements[0]);
@@ -1436,10 +1437,11 @@ cantBeDoingOscSyncForFirstOsc:
 noModulatorsActive:
 						for (int32_t s = 0; s < kNumSources; s++) {
 							if (sourceAmplitudes[s]) {
-								renderSineWaveWithFeedback(
-								    fmOscBuffer, numSamples, &unisonParts[u].sources[s].oscPos, sourceAmplitudesNow[s],
-								    phaseIncrements[s], paramFinalValues[params::LOCAL_CARRIER_0_FEEDBACK + s],
-								    &unisonParts[u].sources[s].carrierFeedback, true, sourceAmplitudeIncrements[s]);
+								renderSineWaveWithFeedback({fmOscBuffer, numSamples}, &unisonParts[u].sources[s].oscPos,
+								                           sourceAmplitudesNow[s], phaseIncrements[s],
+								                           paramFinalValues[params::LOCAL_CARRIER_0_FEEDBACK + s],
+								                           &unisonParts[u].sources[s].carrierFeedback, true,
+								                           sourceAmplitudeIncrements[s]);
 							}
 						}
 
@@ -1677,19 +1679,17 @@ bool Voice::adjustPitch(uint32_t* phaseIncrement, int32_t adjustment) {
 	return true;
 }
 
-void Voice::renderSineWaveWithFeedback(int32_t* bufferStart, int32_t numSamples, uint32_t* phase, int32_t amplitude,
+void Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* phase, int32_t amplitude,
                                        uint32_t phaseIncrement, int32_t feedbackAmount, int32_t* lastFeedbackValue,
                                        bool add, int32_t amplitudeIncrement) {
 
 	uint32_t phaseNow = *phase;
-	*phase += phaseIncrement * numSamples;
+	*phase += phaseIncrement * buffer.size();
 
 	if (feedbackAmount) {
 		int32_t amplitudeNow = amplitude;
-		int32_t* thisSample = bufferStart;
 		int32_t feedbackValue = *lastFeedbackValue;
-		int32_t* bufferEnd = bufferStart + numSamples;
-		do {
+		for (q31_t& sample : buffer) {
 			amplitudeNow += amplitudeIncrement;
 			int32_t feedback = multiply_32x32_rshift32(feedbackValue, feedbackAmount);
 
@@ -1700,66 +1700,46 @@ void Voice::renderSineWaveWithFeedback(int32_t* bufferStart, int32_t numSamples,
 			feedbackValue = dsp::SineOsc::doFMNew(phaseNow += phaseIncrement, feedback);
 
 			if (add) {
-				*thisSample = multiply_accumulate_32x32_rshift32_rounded(*thisSample, feedbackValue, amplitudeNow);
+				sample = multiply_accumulate_32x32_rshift32_rounded(sample, feedbackValue, amplitudeNow);
 			}
 			else {
-				*thisSample = multiply_32x32_rshift32(feedbackValue, amplitudeNow);
+				sample = multiply_32x32_rshift32(feedbackValue, amplitudeNow);
 			}
-		} while (++thisSample != bufferEnd);
+		}
 
 		*lastFeedbackValue = feedbackValue;
 	}
 	else {
 		int32_t amplitudeNow = amplitude;
-		int32_t* thisSample = bufferStart;
-		int32_t* bufferEnd = bufferStart + numSamples;
-
 		if (amplitudeIncrement) {
-			do {
-				int32x4_t sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
+			for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
+				Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
 
-				int32x4_t amplitudeVector;
-				for (int32_t i = 0; i < 4; i++) {
-					amplitudeNow += amplitudeIncrement;
-					amplitudeVector[i] = amplitudeNow >> 1;
-				}
+				Argon<q31_t> amplitudeVector = amplitudeNow + ((amplitudeIncrement * int32x4_t{1, 2, 3, 4}) >> 1);
+				amplitudeNow += (amplitudeIncrement * 4);
 
-				int32x4_t resultValueVector = vqdmulhq_s32(amplitudeVector, sineValueVector);
+				Argon<q31_t> resultValueVector = vqdmulhq_s32(amplitudeVector, sineValueVector);
 
 				if (add) {
-					int32x4_t existingBufferContents = vld1q_s32(thisSample);
-					int32x4_t added = vaddq_s32(existingBufferContents, resultValueVector);
-					vst1q_s32(thisSample, added);
+					sample = vaddq_s32(sample, resultValueVector);
 				}
 				else {
-					vst1q_s32(thisSample, resultValueVector);
+					sample = resultValueVector;
 				}
-
-				thisSample += 4;
-			} while (thisSample < bufferEnd);
+			}
 		}
 
 		else {
-			do {
-				int32x4_t sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
-				int32x4_t resultValueVector = vqrdmulhq_n_s32(sineValueVector, amplitudeNow >> 1);
-
-				if (add) {
-					int32x4_t existingBufferContents = vld1q_s32(thisSample);
-					int32x4_t added = vaddq_s32(existingBufferContents, resultValueVector);
-					vst1q_s32(thisSample, added);
-				}
-				else {
-					vst1q_s32(thisSample, resultValueVector);
-				}
-
-				thisSample += 4;
-			} while (thisSample < bufferEnd);
+			for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
+				Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
+				Argon<q31_t> newSample = vqrdmulhq_n_s32(sineValueVector, amplitudeNow >> 1);
+				sample = (add) ? sample + newSample : newSample;
+			}
 		}
 	}
 }
 
-void Voice::renderFMWithFeedback(int32_t* bufferStart, int32_t numSamples, int32_t* fmBuffer, uint32_t* phase,
+void Voice::renderFMWithFeedback(int32_t* bufferStart, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
                                  int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
                                  int32_t* lastFeedbackValue, int32_t amplitudeIncrement) {
 
@@ -1801,7 +1781,7 @@ void Voice::renderFMWithFeedback(int32_t* bufferStart, int32_t numSamples, int32
 	}
 }
 
-void Voice::renderFMWithFeedbackAdd(int32_t* bufferStart, int32_t numSamples, int32_t* fmBuffer, uint32_t* phase,
+void Voice::renderFMWithFeedbackAdd(int32_t* bufferStart, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
                                     int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
                                     int32_t* lastFeedbackValue, int32_t amplitudeIncrement) {
 
@@ -1915,7 +1895,7 @@ void Voice::renderFMWithFeedbackAdd(int32_t* bufferStart, int32_t numSamples, in
 // happening, which is exactly how it is currently.
 
 void Voice::renderBasicSource(Sound& sound, ParamManagerForTimeline* paramManager, int32_t s,
-                              int32_t* __restrict__ oscBuffer, int32_t numSamples, bool stereoBuffer,
+                              int32_t* __restrict__ oscBuffer, size_t numSamples, bool stereoBuffer,
                               int32_t sourceAmplitude, bool* __restrict__ unisonPartBecameInactive,
                               int32_t overallPitchAdjust, bool doOscSync, uint32_t* __restrict__ oscSyncPos,
                               uint32_t* __restrict__ oscSyncPhaseIncrements, int32_t amplitudeIncrement,
@@ -2481,7 +2461,7 @@ void renderPulseWave(const int16_t* __restrict__ table, int32_t tableSizeMagnitu
 // Experiment. It goes basically exactly the same speed as the non-vector one.
 /*
 void renderCrudeSawWaveWithAmplitude(int32_t* __restrict__ thisSample, int32_t const* bufferEnd, uint32_t phaseNowNow,
-uint32_t phaseIncrementNow, int32_t amplitude, int32_t amplitudeIncrement, int32_t numSamples) {
+uint32_t phaseIncrementNow, int32_t amplitude, int32_t amplitudeIncrement, size_t numSamples) {
 
     int32x4_t existingDataInBuffer = vld1q_s32(thisSample);
 
@@ -2511,7 +2491,7 @@ uint32_t phaseIncrementNow, int32_t amplitude, int32_t amplitudeIncrement, int32
 
 uint32_t renderCrudeSawWaveWithAmplitude(int32_t* thisSample, int32_t* bufferEnd, uint32_t phaseNowNow,
                                          uint32_t phaseIncrementNow, int32_t amplitudeNow, int32_t amplitudeIncrement,
-                                         int32_t numSamples) {
+                                         size_t numSamples) {
 
 	int32_t* remainderSamplesEnd = thisSample + (numSamples & 3);
 
@@ -2548,7 +2528,7 @@ uint32_t renderCrudeSawWaveWithAmplitude(int32_t* thisSample, int32_t* bufferEnd
 }
 
 uint32_t renderCrudeSawWaveWithoutAmplitude(int32_t* thisSample, int32_t* bufferEnd, uint32_t phaseNowNow,
-                                            uint32_t phaseIncrementNow, int32_t numSamples) {
+                                            uint32_t phaseIncrementNow, size_t numSamples) {
 
 	int32_t* remainderSamplesEnd = thisSample + (numSamples & 7);
 
@@ -2598,7 +2578,7 @@ uint32_t renderCrudeSawWaveWithoutAmplitude(int32_t* thisSample, int32_t* buffer
 // Not used, obviously. Just experimenting.
 void renderPDWave(const int16_t* table, const int16_t* secondTable, int32_t numBitsInTableSize,
                   int32_t numBitsInSecondTableSize, int32_t amplitude, int32_t* thisSample, int32_t* bufferEnd,
-                  int32_t numSamplesRemaining, uint32_t phaseIncrementNow, uint32_t* thisPhase, bool applyAmplitude,
+                  size_t numSamplesRemaining, uint32_t phaseIncrementNow, uint32_t* thisPhase, bool applyAmplitude,
                   bool doOscSync, uint32_t resetterPhase, uint32_t resetterPhaseIncrement,
                   uint32_t resetterHalfPhaseIncrement, uint32_t resetterLower, int32_t resetterDivideByPhaseIncrement,
                   uint32_t pulseWidth, uint32_t phaseToAdd, uint32_t retriggerPhase, uint32_t horizontalOffsetThing,
@@ -2761,7 +2741,7 @@ const int16_t* analogSawTables[] = {
 
 __attribute__((optimize("unroll-loops"))) void
 Voice::renderOsc(int32_t s, OscType type, int32_t amplitude, int32_t* bufferStart, int32_t* bufferEnd,
-                 int32_t numSamples, uint32_t phaseIncrement, uint32_t pulseWidth, uint32_t* startPhase,
+                 size_t numSamples, uint32_t phaseIncrement, uint32_t pulseWidth, uint32_t* startPhase,
                  bool applyAmplitude, int32_t amplitudeIncrement, bool doOscSync, uint32_t resetterPhase,
                  uint32_t resetterPhaseIncrement, uint32_t retriggerPhase, int32_t waveIndexIncrement) {
 	GeneralMemoryAllocator::get().checkStack("renderOsc");
@@ -3154,7 +3134,7 @@ doSaw:
 
 					if (doOscSync) {
 						int32_t* bufferStartThisSync = applyAmplitude ? oscSyncRenderingBuffer : bufferStart;
-						int32_t numSamplesThisOscSyncSession = numSamples;
+						size_t numSamplesThisOscSyncSession = numSamples;
 						int16x4_t const32767 = vdup_n_s16(32767); // The pulse rendering function needs this.
 						auto storeVectorWaveForOneSync = [&](int32_t const* const bufferEndThisSyncRender,
 						                                     uint32_t phaseTemp, int32_t* __restrict__ writePos) {
@@ -3199,7 +3179,7 @@ doAnalogSquare:
 callRenderWave:
 		if (doOscSync) {
 			int32_t* bufferStartThisSync = applyAmplitude ? oscSyncRenderingBuffer : bufferStart;
-			int32_t numSamplesThisOscSyncSession = numSamples;
+			size_t numSamplesThisOscSyncSession = numSamples;
 			auto storeVectorWaveForOneSync = //<
 			    [&](int32_t const* const bufferEndThisSyncRender, uint32_t phaseTemp, int32_t* __restrict__ writePos) {
 				    do {

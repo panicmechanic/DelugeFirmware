@@ -26,6 +26,7 @@
 #include "modulation/params/param.h"
 #include "modulation/patch/patcher.h"
 #include <bitset>
+#include <span>
 
 class StereoSample;
 class ModelStackWithVoice;
@@ -88,7 +89,7 @@ public:
 
 	uint32_t getLocalLFOPhaseIncrement();
 	void setAsUnassigned(ModelStackWithVoice* modelStack, bool deletingSong = false);
-	bool render(ModelStackWithVoice* modelStack, int32_t* soundBuffer, int32_t numSamples, bool soundRenderingInStereo,
+	bool render(ModelStackWithVoice* modelStack, int32_t* soundBuffer, size_t numSamples, bool soundRenderingInStereo,
 	            bool applyingPanAtVoiceLevel, uint32_t sourcesChanged, bool doLPF, bool doHPF,
 	            int32_t externalPitchAdjust);
 
@@ -121,23 +122,23 @@ private:
 	// phaseShift);
 
 	void renderOsc(int32_t s, OscType type, int32_t amplitude, int32_t* thisSample, int32_t* bufferEnd,
-	               int32_t numSamples, uint32_t phaseIncrementNow, uint32_t phaseWidth, uint32_t* thisPhase,
+	               size_t numSamples, uint32_t phaseIncrementNow, uint32_t phaseWidth, uint32_t* thisPhase,
 	               bool applyAmplitude, int32_t amplitudeIncrement, bool doOscSync, uint32_t resetterPhase,
 	               uint32_t resetterPhaseIncrement, uint32_t retriggerPhase, int32_t waveIndexIncrement);
 	void renderBasicSource(Sound& sound, ParamManagerForTimeline* paramManager, int32_t s, int32_t* oscBuffer,
-	                       int32_t numSamples, bool stereoBuffer, int32_t sourceAmplitude,
+	                       size_t numSamples, bool stereoBuffer, int32_t sourceAmplitude,
 	                       bool* unisonPartBecameInactive, int32_t overallPitchAdjust, bool doOscSync,
 	                       uint32_t* oscSyncPos, uint32_t* oscSyncPhaseIncrements, int32_t amplitudeIncrement,
 	                       uint32_t* getPhaseIncrements, bool getOutAfterPhaseIncrements, int32_t waveIndexIncrement);
 	bool adjustPitch(uint32_t* phaseIncrement, int32_t adjustment);
 
-	void renderSineWaveWithFeedback(int32_t* thisSample, int32_t numSamples, uint32_t* phase, int32_t amplitude,
+	void renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* phase, int32_t amplitude,
 	                                uint32_t phaseIncrement, int32_t feedbackAmount, int32_t* lastFeedbackValue,
 	                                bool add, int32_t amplitudeIncrement);
-	void renderFMWithFeedback(int32_t* thisSample, int32_t numSamples, int32_t* fmBuffer, uint32_t* phase,
+	void renderFMWithFeedback(int32_t* thisSample, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
 	                          int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
 	                          int32_t* lastFeedbackValue, int32_t amplitudeIncrement);
-	void renderFMWithFeedbackAdd(int32_t* thisSample, int32_t numSamples, int32_t* fmBuffer, uint32_t* phase,
+	void renderFMWithFeedbackAdd(int32_t* thisSample, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
 	                             int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
 	                             int32_t* lastFeedbackValue, int32_t amplitudeIncrement);
 	bool areAllUnisonPartsInactive(ModelStackWithVoice& modelStackWithVoice) const;
