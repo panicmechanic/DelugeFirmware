@@ -50,6 +50,8 @@
 #include "util/functions.h"
 #include "util/lookuptables/lookuptables.h"
 #include "util/misc.h"
+#include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <new>
 
@@ -1401,11 +1403,11 @@ cantBeDoingOscSyncForFirstOsc:
 
 					// Render mod1
 					std::tie(unisonParts[u].modulatorPhase[1], unisonParts[u].modulatorFeedback[1]) =
-					    renderSineWaveWithFeedback(
+					    renderSineWaveWithFeedback<false>(
 					        {spareRenderingBuffer[2], numSamples}, unisonParts[u].modulatorPhase[1],
 					        modulatorAmplitudeLastTime[1], phaseIncrementModulator[1],
 					        paramFinalValues[params::LOCAL_MODULATOR_1_FEEDBACK], unisonParts[u].modulatorFeedback[1],
-					        false, modulatorAmplitudeIncrements[1]);
+					        modulatorAmplitudeIncrements[1]);
 
 					// If mod1 is modulating mod0...
 					if (sound.modulator1ToModulator0) {
@@ -1420,31 +1422,31 @@ cantBeDoingOscSyncForFirstOsc:
 					// Otherwise, so long as modulator0 is in fact active, render it separately and add it
 					else if (modulatorsActive[0]) {
 						std::tie(unisonParts[u].modulatorPhase[0], unisonParts[u].modulatorFeedback[0]) =
-						    renderSineWaveWithFeedback(
+						    renderSineWaveWithFeedback<true>(
 						        {spareRenderingBuffer[2], numSamples}, unisonParts[u].modulatorPhase[0],
 						        modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
 						        paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK],
-						        unisonParts[u].modulatorFeedback[0], true, modulatorAmplitudeIncrements[0]);
+						        unisonParts[u].modulatorFeedback[0], modulatorAmplitudeIncrements[0]);
 					}
 				}
 				else {
 					if (modulatorsActive[0]) {
 						std::tie(unisonParts[u].modulatorPhase[0], unisonParts[u].modulatorFeedback[0]) =
-						    renderSineWaveWithFeedback(
+						    renderSineWaveWithFeedback<false>(
 						        {spareRenderingBuffer[2], numSamples}, unisonParts[u].modulatorPhase[0],
 						        modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
 						        paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK],
-						        unisonParts[u].modulatorFeedback[0], false, modulatorAmplitudeIncrements[0]);
+						        unisonParts[u].modulatorFeedback[0], modulatorAmplitudeIncrements[0]);
 					}
 					else {
 noModulatorsActive:
 						for (int32_t s = 0; s < kNumSources; s++) {
 							if (sourceAmplitudes[s]) {
 								auto& source = unisonParts[u].sources[s];
-								std::tie(source.oscPos, source.carrierFeedback) = renderSineWaveWithFeedback(
+								std::tie(source.oscPos, source.carrierFeedback) = renderSineWaveWithFeedback<true>(
 								    {fmOscBuffer, numSamples}, source.oscPos, sourceAmplitudesNow[s],
 								    phaseIncrements[s], paramFinalValues[params::LOCAL_CARRIER_0_FEEDBACK + s],
-								    source.carrierFeedback, true, sourceAmplitudeIncrements[s]);
+								    source.carrierFeedback, sourceAmplitudeIncrements[s]);
 							}
 						}
 
@@ -1682,40 +1684,48 @@ bool Voice::adjustPitch(uint32_t* phaseIncrement, int32_t adjustment) {
 	return true;
 }
 
+template <bool add>
 std::pair<uint32_t, int32_t> Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t phase,
                                                                int32_t amplitude, uint32_t phaseIncrement,
-                                                               int32_t feedbackAmount, int32_t feedbackValue, bool add,
+                                                               int32_t feedbackAmount, int32_t feedbackValue,
                                                                int32_t amplitudeIncrement) {
 	uint32_t phaseNow = phase;
-	phase += phaseIncrement * buffer.size();
 	if (feedbackAmount) {
 		for (q31_t& sample : buffer) {
-			int32_t feedback = multiply_32x32_rshift32(feedbackValue, feedbackAmount);
+			feedbackValue = multiply_32x32_rshift32(feedbackValue, feedbackAmount);
 
 			// We do hard clipping of the feedback amount. Doing tanH causes aliasing - even if we used the anti-aliased
 			// version. The hard clipping one sounds really solid.
-			feedback = signed_saturate<22>(feedback);
+			feedbackValue = signed_saturate<22>(feedbackValue);
 
-			feedbackValue = dsp::SineOsc::doFMNew(phaseNow += phaseIncrement, feedback);
+			feedbackValue = dsp::SineOsc::doFMNew(phaseNow += phaseIncrement, feedbackValue);
 
+			if constexpr (add) {
+				sample = multiply_accumulate_32x32_rshift32_rounded(sample, feedbackValue, amplitude);
+			}
+			else {
+				sample = multiply_32x32_rshift32(feedbackValue, amplitude);
+			}
 			amplitude += amplitudeIncrement;
-			sample = (add) ? multiply_accumulate_32x32_rshift32_rounded(sample, feedbackValue, amplitude)
-			               : multiply_32x32_rshift32(feedbackValue, amplitude);
 		}
 	}
 	else {
 		// setup our amplitude vector. if there's no amplitudeIncrement, this will simply be filled with the value of
 		// `amplitude` otherwise, this'll be a ramp where the step is amplitudeIncrement
-		Argon<q31_t> amplitudeVector = amplitude + (Argon<q31_t>{amplitudeIncrement} * int32x4_t{1, 2, 3, 4});
+		Argon<q31_t> amplitudeVector = Argon{amplitude}.MultiplyAdd(Argon<int32_t>{1, 2, 3, 4}, amplitudeIncrement);
 		for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
-			amplitudeVector = amplitudeVector + (amplitudeIncrement * 4);
-
 			Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
-			Argon<q31_t> new_sample = sineValueVector.MultiplyFixedPoint(amplitudeVector >> 1);
-			sample = (add) ? sample + new_sample : sample;
+
+			if constexpr (add) {
+				sample = sample.MultiplyAddFixedPoint(sineValueVector, amplitudeVector >> 1);
+			}
+			else {
+				sample = sineValueVector.MultiplyFixedPoint(amplitudeVector >> 1);
+			}
+			amplitudeVector = amplitudeVector + (amplitudeIncrement * 4);
 		}
 	}
-	return {phase, feedbackValue};
+	return {phase + phaseIncrement * buffer.size(), feedbackValue};
 }
 
 void Voice::renderFMWithFeedback(int32_t* bufferStart, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
@@ -2621,7 +2631,7 @@ void renderPDWave(const int16_t* table, const int16_t* secondTable, int32_t numB
  *
  * @return table_number, table_size
  */
-std::pair<int32_t, int32_t> getTableNumber(uint32_t phaseIncrement) {
+constexpr std::pair<int32_t, int32_t> getTableNumber(uint32_t phaseIncrement) {
 	if (phaseIncrement <= 1247086) {
 		return {0, 13};
 	}
