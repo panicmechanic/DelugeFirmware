@@ -131,7 +131,7 @@ private:
 	                       bool* unisonPartBecameInactive, int32_t overallPitchAdjust, bool doOscSync,
 	                       uint32_t* oscSyncPos, uint32_t* oscSyncPhaseIncrements, int32_t amplitudeIncrement,
 	                       uint32_t* getPhaseIncrements, bool getOutAfterPhaseIncrements, int32_t waveIndexIncrement);
-	bool adjustPitch(uint32_t* phaseIncrement, int32_t adjustment);
+	static bool adjustPitch(uint32_t& phaseIncrement, int32_t adjustment);
 
 	template <bool add>
 	std::pair<uint32_t, int32_t> renderSineWaveWithFeedback(std::span<q31_t> buffer, uint32_t phase,
