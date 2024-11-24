@@ -27,6 +27,7 @@
 #include "modulation/patch/patcher.h"
 #include <bitset>
 #include <span>
+#include <utility>
 
 class StereoSample;
 class ModelStackWithVoice;
@@ -132,9 +133,10 @@ private:
 	                       uint32_t* getPhaseIncrements, bool getOutAfterPhaseIncrements, int32_t waveIndexIncrement);
 	bool adjustPitch(uint32_t* phaseIncrement, int32_t adjustment);
 
-	void renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* phase, int32_t amplitude,
-	                                uint32_t phaseIncrement, int32_t feedbackAmount, int32_t* lastFeedbackValue,
-	                                bool add, int32_t amplitudeIncrement);
+	std::pair<uint32_t, int32_t> renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t phase,
+	                                                        int32_t amplitude, uint32_t phaseIncrement,
+	                                                        int32_t feedbackAmount, int32_t lastFeedbackValue, bool add,
+	                                                        int32_t amplitudeIncrement);
 	void renderFMWithFeedback(int32_t* thisSample, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
 	                          int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
 	                          int32_t* lastFeedbackValue, int32_t amplitudeIncrement);

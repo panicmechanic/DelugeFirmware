@@ -1400,11 +1400,12 @@ cantBeDoingOscSyncForFirstOsc:
 					}
 
 					// Render mod1
-					renderSineWaveWithFeedback({spareRenderingBuffer[2], numSamples}, &unisonParts[u].modulatorPhase[1],
-					                           modulatorAmplitudeLastTime[1], phaseIncrementModulator[1],
-					                           paramFinalValues[params::LOCAL_MODULATOR_1_FEEDBACK],
-					                           &unisonParts[u].modulatorFeedback[1], false,
-					                           modulatorAmplitudeIncrements[1]);
+					std::tie(unisonParts[u].modulatorPhase[1], unisonParts[u].modulatorFeedback[1]) =
+					    renderSineWaveWithFeedback(
+					        {spareRenderingBuffer[2], numSamples}, unisonParts[u].modulatorPhase[1],
+					        modulatorAmplitudeLastTime[1], phaseIncrementModulator[1],
+					        paramFinalValues[params::LOCAL_MODULATOR_1_FEEDBACK], unisonParts[u].modulatorFeedback[1],
+					        false, modulatorAmplitudeIncrements[1]);
 
 					// If mod1 is modulating mod0...
 					if (sound.modulator1ToModulator0) {
@@ -1418,30 +1419,32 @@ cantBeDoingOscSyncForFirstOsc:
 
 					// Otherwise, so long as modulator0 is in fact active, render it separately and add it
 					else if (modulatorsActive[0]) {
-						renderSineWaveWithFeedback(
-						    {spareRenderingBuffer[2], numSamples}, &unisonParts[u].modulatorPhase[0],
-						    modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
-						    paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK], &unisonParts[u].modulatorFeedback[0],
-						    true, modulatorAmplitudeIncrements[0]);
+						std::tie(unisonParts[u].modulatorPhase[0], unisonParts[u].modulatorFeedback[0]) =
+						    renderSineWaveWithFeedback(
+						        {spareRenderingBuffer[2], numSamples}, unisonParts[u].modulatorPhase[0],
+						        modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
+						        paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK],
+						        unisonParts[u].modulatorFeedback[0], true, modulatorAmplitudeIncrements[0]);
 					}
 				}
 				else {
 					if (modulatorsActive[0]) {
-						renderSineWaveWithFeedback(
-						    {spareRenderingBuffer[2], numSamples}, &unisonParts[u].modulatorPhase[0],
-						    modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
-						    paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK], &unisonParts[u].modulatorFeedback[0],
-						    false, modulatorAmplitudeIncrements[0]);
+						std::tie(unisonParts[u].modulatorPhase[0], unisonParts[u].modulatorFeedback[0]) =
+						    renderSineWaveWithFeedback(
+						        {spareRenderingBuffer[2], numSamples}, unisonParts[u].modulatorPhase[0],
+						        modulatorAmplitudeLastTime[0], phaseIncrementModulator[0],
+						        paramFinalValues[params::LOCAL_MODULATOR_0_FEEDBACK],
+						        unisonParts[u].modulatorFeedback[0], false, modulatorAmplitudeIncrements[0]);
 					}
 					else {
 noModulatorsActive:
 						for (int32_t s = 0; s < kNumSources; s++) {
 							if (sourceAmplitudes[s]) {
-								renderSineWaveWithFeedback({fmOscBuffer, numSamples}, &unisonParts[u].sources[s].oscPos,
-								                           sourceAmplitudesNow[s], phaseIncrements[s],
-								                           paramFinalValues[params::LOCAL_CARRIER_0_FEEDBACK + s],
-								                           &unisonParts[u].sources[s].carrierFeedback, true,
-								                           sourceAmplitudeIncrements[s]);
+								auto& source = unisonParts[u].sources[s];
+								std::tie(source.oscPos, source.carrierFeedback) = renderSineWaveWithFeedback(
+								    {fmOscBuffer, numSamples}, source.oscPos, sourceAmplitudesNow[s],
+								    phaseIncrements[s], paramFinalValues[params::LOCAL_CARRIER_0_FEEDBACK + s],
+								    source.carrierFeedback, true, sourceAmplitudeIncrements[s]);
 							}
 						}
 
@@ -1679,17 +1682,14 @@ bool Voice::adjustPitch(uint32_t* phaseIncrement, int32_t adjustment) {
 	return true;
 }
 
-void Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* phase, int32_t amplitude,
-                                       uint32_t phaseIncrement, int32_t feedbackAmount, int32_t* lastFeedbackValue,
-                                       bool add, int32_t amplitudeIncrement) {
-
-	uint32_t phaseNow = *phase;
-	*phase += phaseIncrement * buffer.size();
-
+std::pair<uint32_t, int32_t> Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t phase,
+                                                               int32_t amplitude, uint32_t phaseIncrement,
+                                                               int32_t feedbackAmount, int32_t feedbackValue, bool add,
+                                                               int32_t amplitudeIncrement) {
+	uint32_t phaseNow = phase;
+	phase += phaseIncrement * buffer.size();
 	if (feedbackAmount) {
-		int32_t feedbackValue = *lastFeedbackValue;
 		for (q31_t& sample : buffer) {
-			amplitude += amplitudeIncrement;
 			int32_t feedback = multiply_32x32_rshift32(feedbackValue, feedbackAmount);
 
 			// We do hard clipping of the feedback amount. Doing tanH causes aliasing - even if we used the anti-aliased
@@ -1698,33 +1698,24 @@ void Voice::renderSineWaveWithFeedback(const std::span<q31_t> buffer, uint32_t* 
 
 			feedbackValue = dsp::SineOsc::doFMNew(phaseNow += phaseIncrement, feedback);
 
+			amplitude += amplitudeIncrement;
 			sample = (add) ? multiply_accumulate_32x32_rshift32_rounded(sample, feedbackValue, amplitude)
 			               : multiply_32x32_rshift32(feedbackValue, amplitude);
 		}
-
-		*lastFeedbackValue = feedbackValue;
 	}
 	else {
-		if (amplitudeIncrement) {
-			for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
-				Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
+		// setup our amplitude vector. if there's no amplitudeIncrement, this will simply be filled with the value of
+		// `amplitude` otherwise, this'll be a ramp where the step is amplitudeIncrement
+		Argon<q31_t> amplitudeVector = amplitude + (Argon<q31_t>{amplitudeIncrement} * int32x4_t{1, 2, 3, 4});
+		for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
+			amplitudeVector = amplitudeVector + (amplitudeIncrement * 4);
 
-				Argon<q31_t> amplitudeVector = amplitudeNow + ((amplitudeIncrement * int32x4_t{1, 2, 3, 4}) >> 1);
-				amplitudeNow += (amplitudeIncrement * 4);
-
-				Argon<q31_t> new_sample = amplitudeVector.MultiplyFixedPoint(sineValueVector);
-				sample = (add) ? sample + new_sample : sample
-			}
-		}
-
-		else {
-			for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
-				Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
-				Argon<q31_t> new_sample = sineValueVector.MultiplyRoundFixedPoint(amplitudeNow >> 1);
-				sample = (add) ? sample + new_sample : newSample;
-			}
+			Argon<q31_t> sineValueVector = dsp::SineOsc::getSineVector(&phaseNow, phaseIncrement);
+			Argon<q31_t> new_sample = sineValueVector.MultiplyFixedPoint(amplitudeVector >> 1);
+			sample = (add) ? sample + new_sample : sample;
 		}
 	}
+	return {phase, feedbackValue};
 }
 
 void Voice::renderFMWithFeedback(int32_t* bufferStart, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
