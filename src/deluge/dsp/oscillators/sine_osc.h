@@ -37,12 +37,12 @@ public:
 	}
 
 	// Test and verified to be identical to original function 11/22/24
-	static inline Argon<int32_t> doFMVector(Argon<uint32_t> phaseVector, Argon<uint32_t> phaseShift) {
+	static inline Argon<int32_t> doFMVector(const Argon<uint32_t> phaseVector, const Argon<uint32_t> phaseShift) {
 		return render(phaseVector + (phaseShift << 8));
 	}
 
 private:
-	static inline Argon<int32_t> render(Argon<uint32_t> phase) {
+	static inline Argon<int32_t> render(const Argon<uint32_t> phase) {
 		// interpolation fractional component
 		ArgonHalf<int16_t> strength2 = phase.ShiftRightNarrow<32 - 16 - kSineTableSizeMagnitude + 1>()
 		                                   .BitwiseAnd(std::numeric_limits<int16_t>::max())

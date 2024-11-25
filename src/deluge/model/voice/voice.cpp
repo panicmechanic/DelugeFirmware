@@ -54,6 +54,7 @@
 #include <cstdint>
 #include <cstring>
 #include <new>
+#include <ranges>
 
 extern "C" {
 #include "RZA1/mtu/mtu.h"
@@ -1457,11 +1458,12 @@ noModulatorsActive:
 				// Carriers
 				for (int32_t s = 0; s < kNumSources; s++) {
 					if (sourceAmplitudes[s]) {
-						renderFMWithFeedbackAdd(
-						    fmOscBuffer, numSamples, spareRenderingBuffer[2], &unisonParts[u].sources[s].oscPos,
-						    sourceAmplitudesNow[s], phaseIncrements[s],
-						    paramFinalValues[params::LOCAL_CARRIER_0_FEEDBACK + s],
-						    &unisonParts[u].sources[s].carrierFeedback, sourceAmplitudeIncrements[s]);
+						auto& source = unisonParts[u].sources[s];
+						std::tie(source.oscPos, source.carrierFeedback) =
+						    renderFMWithFeedbackAdd({fmOscBuffer, numSamples}, {spareRenderingBuffer[2], numSamples},
+						                            source.oscPos, sourceAmplitudesNow[s], phaseIncrements[s],
+						                            paramFinalValues[params::LOCAL_CARRIER_0_FEEDBACK + s],
+						                            source.carrierFeedback, sourceAmplitudeIncrements[s]);
 					}
 				}
 
@@ -1770,99 +1772,49 @@ void Voice::renderFMWithFeedback(int32_t* bufferStart, size_t numSamples, int32_
 	}
 }
 
-void Voice::renderFMWithFeedbackAdd(int32_t* bufferStart, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
-                                    int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
-                                    int32_t* lastFeedbackValue, int32_t amplitudeIncrement) {
+std::pair<uint32_t, int32_t> Voice::renderFMWithFeedbackAdd(const std::span<q31_t> buffer,
+                                                            const std::span<q31_t> fmBuffer, uint32_t phase,
+                                                            int32_t amplitude, uint32_t phaseIncrement,
+                                                            int32_t feedbackAmount, int32_t feedback,
+                                                            int32_t amplitudeIncrement) {
 
-	uint32_t phaseNow = *phase;
-	*phase += phaseIncrement * numSamples;
+	if (feedbackAmount != 0) {
+		for (auto [sample, fmSample] : std::views::zip(buffer, fmBuffer)) {
+			amplitude += amplitudeIncrement;
 
-	if (feedbackAmount) {
-		int32_t amplitudeNow = amplitude;
-		int32_t* thisSample = bufferStart;
-		int32_t* fmSample = fmBuffer;
-		int32_t* bufferEnd = bufferStart + numSamples;
-
-		int32_t feedbackValue = *lastFeedbackValue;
-		do {
-			amplitudeNow += amplitudeIncrement;
-
-			int32_t feedback = multiply_32x32_rshift32(feedbackValue, feedbackAmount);
+			feedback = multiply_32x32_rshift32(feedback, feedbackAmount);
 
 			// We do hard clipping of the feedback amount. Doing tanH causes aliasing - even if we used the anti-aliased
 			// version. The hard clipping one sounds really solid.
 			feedback = signed_saturate<22>(feedback);
 
-			uint32_t sum = (uint32_t) * (fmSample++) + (uint32_t)feedback;
-
-			feedbackValue = dsp::SineOsc::doFMNew(phaseNow += phaseIncrement, sum);
-			*thisSample = multiply_accumulate_32x32_rshift32_rounded(*thisSample, feedbackValue, amplitudeNow);
-		} while (++thisSample != bufferEnd);
-
-		*lastFeedbackValue = feedbackValue;
+			uint32_t sum = static_cast<uint32_t>(fmSample) + static_cast<uint32_t>(feedback);
+			phase += phaseIncrement;
+			feedback = dsp::SineOsc::doFMNew(phase, sum);
+			sample = multiply_accumulate_32x32_rshift32_rounded(sample, feedback, amplitude);
+		}
+		return {phase, feedback};
 	}
 	else {
-		int32_t amplitudeNow = amplitude;
-		int32_t* thisSample = bufferStart;
-		int32_t* bufferEnd = bufferStart + numSamples;
-		uint32_t* fmSample = (uint32_t*)fmBuffer;
-		int32_t* bufferPreEnd = bufferEnd - 4;
+		Argon<q31_t> amplitudeVector = Argon{amplitude}.MultiplyAdd(Argon<int32_t>{1, 2, 3, 4}, amplitudeIncrement);
 
-		uint32x4_t phaseVector;
-		for (int32_t i = 0; i < 4; i++) {
-			phaseNow += phaseIncrement;
-			phaseVector[i] = phaseNow;
+		Argon<uint32_t> phaseVector = Argon{phase}.MultiplyAdd(Argon<uint32_t>{1U, 2U, 3U, 4U}, phaseIncrement);
+		Argon<uint32_t> phaseIncrementVector = phaseIncrement * 4;
+
+		auto fmIterator = argon::vectorize(fmBuffer).cbegin();
+		for (Argon<q31_t>& sample : argon::vectorize(buffer)) {
+			// Lookup
+			Argon<q31_t> sineVector = dsp::SineOsc::doFMVector(phaseVector, (*fmIterator).As<uint32_t>());
+
+			// Mix
+			sample = sample.MultiplyAddFixedPoint(sineVector, amplitudeVector);
+
+			// Increment
+			phaseVector = phaseVector + phaseIncrementVector;
+			fmIterator++;
 		}
 
-		uint32x4_t phaseIncrementVector = vdupq_n_u32(phaseIncrement << 2);
-
-		if (amplitudeIncrement) {
-			while (true) {
-				uint32x4_t phaseShift = vld1q_u32(fmSample);
-				int32x4_t sineValueVector = dsp::SineOsc::doFMVector(phaseVector, phaseShift);
-
-				int32x4_t amplitudeVector;
-				for (int32_t i = 0; i < 4; i++) {
-					amplitudeNow += amplitudeIncrement;
-					amplitudeVector[i] = amplitudeNow >> 1;
-				}
-
-				int32x4_t resultValueVector = vqdmulhq_s32(amplitudeVector, sineValueVector);
-
-				int32x4_t existingBufferContents = vld1q_s32(thisSample);
-				int32x4_t added = vaddq_s32(existingBufferContents, resultValueVector);
-				vst1q_s32(thisSample, added);
-
-				if (thisSample >= bufferPreEnd) {
-					break;
-				}
-
-				thisSample += 4;
-				fmSample += 4;
-				phaseVector = vaddq_u32(phaseVector, phaseIncrementVector);
-			}
-		}
-
-		else {
-			while (true) {
-				uint32x4_t phaseShift = vld1q_u32(fmSample);
-				int32x4_t sineValueVector = dsp::SineOsc::doFMVector(phaseVector, phaseShift);
-
-				int32x4_t resultValueVector = vqrdmulhq_n_s32(sineValueVector, amplitudeNow >> 1);
-
-				int32x4_t existingBufferContents = vld1q_s32(thisSample);
-				int32x4_t added = vaddq_s32(existingBufferContents, resultValueVector);
-				vst1q_s32(thisSample, added);
-
-				if (thisSample >= bufferPreEnd) {
-					break;
-				}
-
-				thisSample += 4;
-				fmSample += 4;
-				phaseVector = vaddq_u32(phaseVector, phaseIncrementVector);
-			}
-		}
+		return {phase + phaseIncrement * buffer.size(), feedback};
 	}
 }
 

@@ -134,16 +134,18 @@ private:
 	static bool adjustPitch(uint32_t& phaseIncrement, int32_t adjustment);
 
 	template <bool add>
-	std::pair<uint32_t, int32_t> renderSineWaveWithFeedback(std::span<q31_t> buffer, uint32_t phase,
-	                                                        int32_t amplitude, uint32_t phaseIncrement,
-	                                                        int32_t feedbackAmount, int32_t lastFeedbackValue,
-	                                                        int32_t amplitudeIncrement);
+	std::pair<uint32_t, int32_t> renderSineWaveWithFeedback(std::span<q31_t> buffer, uint32_t phase, int32_t amplitude,
+	                                                        uint32_t phaseIncrement, int32_t feedbackAmount,
+	                                                        int32_t lastFeedbackValue, int32_t amplitudeIncrement);
 	void renderFMWithFeedback(int32_t* thisSample, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
 	                          int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
 	                          int32_t* lastFeedbackValue, int32_t amplitudeIncrement);
-	void renderFMWithFeedbackAdd(int32_t* thisSample, size_t numSamples, int32_t* fmBuffer, uint32_t* phase,
-	                             int32_t amplitude, uint32_t phaseIncrement, int32_t feedbackAmount,
-	                             int32_t* lastFeedbackValue, int32_t amplitudeIncrement);
+
+	std::pair<uint32_t, int32_t> renderFMWithFeedbackAdd(std::span<q31_t> buffer, std::span<q31_t> fmBuffer,
+	                                                     uint32_t phase, int32_t amplitude, uint32_t phaseIncrement,
+	                                                     int32_t feedbackAmount, int32_t feedback,
+	                                                     int32_t amplitudeIncrement);
+
 	bool areAllUnisonPartsInactive(ModelStackWithVoice& modelStackWithVoice) const;
 	void setupPorta(const Sound& sound);
 	int32_t combineExpressionValues(const Sound& sound, int32_t expressionDimension) const;

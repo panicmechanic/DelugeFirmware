@@ -206,7 +206,7 @@ add_compile_options(
     $<$<COMPILE_LANGUAGE:ASM>:-x>
     $<$<COMPILE_LANGUAGE:ASM>:assembler-with-cpp>
 
-
+    $<$<COMPILE_LANGUAGE:CXX>:-fconcepts-diagnostics-depth=200>
 )
 
 # Add libraries
