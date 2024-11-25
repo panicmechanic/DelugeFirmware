@@ -1692,6 +1692,7 @@ std::pair<uint32_t, int32_t> Voice::renderSineWaveWithFeedback(const std::span<q
 	uint32_t phaseNow = phase;
 	if (feedbackAmount) {
 		for (q31_t& sample : buffer) {
+			amplitude += amplitudeIncrement;
 			feedbackValue = multiply_32x32_rshift32(feedbackValue, feedbackAmount);
 
 			// We do hard clipping of the feedback amount. Doing tanH causes aliasing - even if we used the anti-aliased
@@ -1706,7 +1707,6 @@ std::pair<uint32_t, int32_t> Voice::renderSineWaveWithFeedback(const std::span<q
 			else {
 				sample = multiply_32x32_rshift32(feedbackValue, amplitude);
 			}
-			amplitude += amplitudeIncrement;
 		}
 	}
 	else {
