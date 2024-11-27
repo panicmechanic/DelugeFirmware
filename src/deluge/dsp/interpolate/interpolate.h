@@ -26,15 +26,24 @@ public:
 		return interpolation_buffer_r_[idx >> 3][idx & 3];
 	}
 
+#pragma GCC push_options
+#pragma GCC optimize("no-tree-loop-distribute-patterns")
 	inline void pushL(int16_t value) {
-		std::memmove(&bufferL(0), &bufferL(1), kInterpolationMaxNumSamples - 1);
+		// shift interpolation array forwards
+		for (int32_t i = kInterpolationMaxNumSamples - 1; i > 0; i--){
+			bufferL(i) = bufferL(i - 1);
+		}
 		interpolation_buffer_l_[0][0] = value;
 	}
 
 	inline void pushR(int16_t value) {
-		std::memmove(&bufferR(0), &bufferR(1), kInterpolationMaxNumSamples - 1);
+		// shift interpolation array forwards
+		for (int32_t i = kInterpolationMaxNumSamples - 1; i > 0; i--){
+			bufferR(i) = bufferR(i - 1);
+		}
 		interpolation_buffer_r_[0][0] = value;
 	}
+#pragma GCC pop_options
 
 	inline void jumpForward(size_t num_samples) {
 		for (int32_t i = kInterpolationMaxNumSamples - 1; i >= num_samples; i--) {
